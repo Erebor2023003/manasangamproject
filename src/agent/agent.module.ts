@@ -9,12 +9,14 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { JwtService } from '@nestjs/jwt';
 import { Sangham, sanghamSchema } from './schema/sangham.schema';
+import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Agent.name, schema: agentSchema },
       { name: Sangham.name, schema: sanghamSchema },
+      { name: Customer.name, schema: customerSchema },
     ]),
   ],
   controllers: [AgentController],

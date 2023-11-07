@@ -10,6 +10,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [AdminModule, AgentModule, CustomerModule,AuthModule,
@@ -24,7 +25,10 @@ import { RolesGuard } from './auth/guards/roles.guard';
           expiresIn: '10s',
         },
       }),
-    })],
+    }),
+    
+    ScheduleModule.forRoot()
+  ],
   controllers: [AppController],
   providers: [AppService,{
     provide: APP_GUARD,

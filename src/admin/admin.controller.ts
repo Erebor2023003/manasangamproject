@@ -1,6 +1,9 @@
 import { Body, Controller, HttpStatus, Post } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { adminDto } from './dto/admin.dto';
+import { podupuDetailsDto } from './dto/podhupuDetails.dto';
+import { Cron } from '@nestjs/schedule';
+import { podhupuDto } from './dto/podhupu.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -31,5 +34,31 @@ export class AdminController {
         message: error,
       };
     }
+  }
+
+  @Post('/addpodupudetails')
+  async addPodupuDetails(@Body() req: podupuDetailsDto) {
+    try{
+      const addDetails = await this.adminService.addpodupuDetails(req);
+      return addDetails
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Cron('0 0 1 * *')
+  async openForBusiness(@Body() req: podhupuDto)  {
+      try{
+        const addpodhupurecord = await this.adminService.createPodupu(req);
+        return addpodhupurecord
+      } catch(error) {
+        return {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: error,
+        }
+      }
   }
 }

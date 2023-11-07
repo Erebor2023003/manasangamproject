@@ -1,12 +1,14 @@
-import { Prop } from "@nestjs/mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
-import { v4 as uuid } from 'uuid'
+import { CustomerStatus } from "src/auth/guards/roles.enum";
+import { v4 as uuid } from 'uuid';
+@Schema({ timestamps: true })
 
 export class Customer extends Document{
     @Prop({default: uuid})
     customerId: string
     @Prop()
-    periodOfAppu: string
+    sanghamId: string
     @Prop()
     firstName: string
     @Prop()
@@ -19,4 +21,8 @@ export class Customer extends Document{
     aadharImage: string
     @Prop()
     profileImage: string
+    @Prop({default: CustomerStatus.ACTIVE})
+    status: string
 }
+
+export const customerSchema = SchemaFactory.createForClass(Customer);

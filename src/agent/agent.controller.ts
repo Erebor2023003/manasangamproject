@@ -102,4 +102,17 @@ export class AgentController {
       }
     }
   }
+
+  @Post('/getsanghambyid')
+  async getSanghamById(@Body() req: sanghamDto) {
+    try{
+      const getDetails = await this.agentService.getSanghamDetails(req);
+      return getDetails
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

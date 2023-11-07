@@ -7,12 +7,14 @@ import { agentDto } from './dto/agent.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { sanghamDto } from './dto/sangham.dto';
 import { Sangham } from './schema/sangham.schema';
+import { Customer } from 'src/customer/schema/customer.schema';
 
 @Injectable()
 export class AgentService {
   constructor(
     @InjectModel(Agent.name) private readonly agentModel: Model<Agent>,
     @InjectModel(Sangham.name) private readonly sanghamModel: Model<Sangham>,
+    @InjectModel(Customer.name) private readonly customerModel: Model<Customer>,
     private readonly sharedService: SharedService,
     private readonly authService: AuthService,
   ) {}
@@ -254,6 +256,42 @@ export class AgentService {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  async getSanghamDetails(req: sanghamDto) {
+    try{
+      const getDetails = await this.sanghamModel.findOne({sanghamId: req.sanghamId});
+      if(getDetails) {
+        const count = await this.customerModel.find({sanghamId: req.sanghamId}).count();
+        const getagentdetails = await this.sanghamModel.aggregate([
+          {$match: {sanghamId: getDetails.sanghamId}},
+          {
+            $lookup: {
+              from: "agents",
+              localField: "agentId",
+              foreignField: "agentId",
+              as: "agentId",
+            }
+          }
+        ]);
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Sangham Details",
+          count: count + " " + "members",
+          data: getagentdetails,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Sangham Not Found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
     }
   }
 }
