@@ -49,10 +49,10 @@ export class AdminController {
     }
   }
 
-  @Cron('0 0 1 * *')
-  async openForBusiness(@Body() req: podhupuDto)  {
+  @Cron('0 * * * * *')
+  async openForBusiness()  {
       try{
-        const addpodhupurecord = await this.adminService.createPodupu(req);
+        const addpodhupurecord = await this.adminService.createPodupu();
         return addpodhupurecord
       } catch(error) {
         return {

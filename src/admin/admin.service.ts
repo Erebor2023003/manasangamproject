@@ -8,8 +8,7 @@ import { podupuDetailsDto } from './dto/podhupuDetails.dto';
 import { PodupuDetails } from './schema/podhupuDetails.schema';
 import { podhupuDto } from './dto/podhupu.dto';
 import { Podupu } from './schema/podhupu.schema';
-import { isSameDay } from 'date-fns';
-import { format, parse } from 'date-fns';
+import { isSameDay, format, parse, differenceInDays, subMonths, differenceInMonths  } from 'date-fns';
 
 @Injectable()
 export class AdminService {
@@ -125,115 +124,11 @@ export class AdminService {
     }
   }
 
-  async createPodupu(req: podhupuDto) {
+  async createPodupu() {
     try {
-      // const podupuDetails = await this.podupudetailsModel.find().exec();
-
-      // for (const detail of podupuDetails) {
-      //   const podupuRecord = new this.podupuModel({
-      //     customerId: detail.customerId,
-      //     podhupuAmount: detail.monthlyAmount,
-      //     date: detail.startDate,
-      //     fine: detail.fine,
-      //   });
-      //   console.log(podupuRecord);
-      //   await podupuRecord.save();
-      // }
-
-      //   const podupuDetails = await this.podupudetailsModel.find().exec();
-
-      // for (const detail of podupuDetails) {
-      //   const customerStartDate = new Date(detail.startDate);
-      //   const currentDate = new Date();
-      //   let nextRecordDate = new Date(customerStartDate);
-
-      //   while (nextRecordDate <= currentDate) {
-      //     nextRecordDate = addMonths(nextRecordDate, detail.podupuPeriod);
-      //   }
-
-      //   // Check if the next record date is in the future
-      //   if (nextRecordDate <= currentDate) {
-      //     continue;
-      //   }
-
-      //   const podupuRecord = new this.podupuModel({
-      //     customerId: detail.customerId,
-      //     podhupuAmount: detail.monthlyAmount,
-      //     date: nextRecordDate,
-      //     fine: detail.fine,
-      //     // Add other fields as needed
-      //   });
-      //   console.log(podupuRecord);
-      //   await podupuRecord.save();
-      // }
-
-      // const podupuDetails = await this.podupudetailsModel.find().exec();
-      // const currentDate = new Date();
-
-      // for (const detail of podupuDetails) {
-      //   const customerStartDate = new Date(detail.startDate);
-
-      //   if (isSameDay(currentDate, customerStartDate)) {
-      //     const podupuRecord = new this.podupuModel({
-      //       customerId: detail.customerId,
-      //       podhupuAmount: detail.monthlyAmount,
-      //       date: currentDate,
-      //       fine: detail.fine,
-      //       // Add other fields as needed
-      //     });
-
-      //     console.log(podupuRecord);
-
-      //     await podupuRecord.save();
-      //   }
-      // }
-
-      // const currentDate = new Date();
-
-      // const podupuDetails = await this.podupudetailsModel.find().exec();
-
-      // for (const detail of podupuDetails) {
-      //   const customerStartDate = new Date(detail.startDate);
-      //   console.log('customerStartDate:', customerStartDate);
-      //   console.log('currentDate:', currentDate);
-      //   console.log('isSameDay:', isSameDay(customerStartDate, currentDate));
-
-      //   if (isSameDay(customerStartDate, currentDate)) {
-      //     const podupuRecord = new this.podupuModel({
-      //       customerId: detail.customerId,
-      //       podhupuAmount: detail.monthlyAmount,
-      //       date: currentDate,
-      //       fine: detail.fine,
-      //       // Add other fields as needed
-      //     });
-
-      //     await podupuRecord.save();
-      //   }
-      // }
-
-      //   const currentDate = new Date();
-      // const currentDateFormatted = format(currentDate, 'dd-MM-yyyy');
-
-      // const podupuDetails = await this.podupudetailsModel.find().exec();
-
-      // for (const detail of podupuDetails) {
-      //   const customerStartDate = parse(detail.startDate, 'dd-MM-yyyy', new Date());
-
-      //   if (isSameDay(customerStartDate, currentDateFormatted)) {
-      //     const podupuRecord = new this.podupuModel({
-      //       customerId: detail.customerId,
-      //       podhupuAmount: detail.monthlyAmount,
-      //       date: currentDate,
-      //       fine: detail.fine,
-      //       // Add other fields as needed
-      //     });
-
-      //     await podupuRecord.save();
-      //   }
-      // }
-
       const currentDate = new Date();
       const currentDateFormatted = format(currentDate, 'dd-MM-yyyy');
+      const lastMonth = subMonths(currentDate, 1);
 
       const podupuDetails = await this.podupudetailsModel.find().exec();
 
@@ -246,22 +141,33 @@ export class AdminService {
         const formattedStartDate = format(customerStartDate, 'dd-MM-yyyy');
         console.log('customerStartDate:', customerStartDate);
           console.log('currentDate:', currentDate);
-          console.log('isSameDay:', isSameDay(customerStartDate, currentDate));
-        if (
-          isSameDay(
-            customerStartDate,
-            parse(currentDateFormatted, 'dd-MM-yyyy', new Date()),
-          )
-        ) {
-          const podupuRecord = new this.podupuModel({
-            customerId: detail.customerId,
-            podhupuAmount: detail.monthlyAmount,
-            date: currentDate,
-            fine: detail.fine,
-            // Add other fields as needed
-          });
+          console.log('isSameDay:', isSameDay(customerStartDate, lastMonth) || isSameDay(customerStartDate, currentDate));
 
-          await podupuRecord.save();
+          
+        if (
+          isSameDay(customerStartDate, lastMonth) || isSameDay(customerStartDate, currentDate)
+        ) {
+          const lastRecord = await this.podupuModel.findOne({
+            customerId: detail.customerId,
+          }).sort({ date: -1 }).exec();
+
+          const timeGapInDays = lastRecord
+            ? differenceInMonths(currentDate, customerStartDate)
+            : 0;
+          console.log(timeGapInDays);
+          const interest = (detail.monthlyAmount * timeGapInDays * detail.interest) / 100;
+
+            const podupuRecord = new this.podupuModel({
+              customerId: detail.customerId,
+              podhupuAmount: detail.monthlyAmount,
+              date: currentDate,
+              fine: detail.monthlyAmount * (detail.fine / 100),
+              interest: interest,
+              Total: detail.monthlyAmount + interest,
+            });
+  
+            await podupuRecord.save();
+          
         }
       }
     } catch (error) {
