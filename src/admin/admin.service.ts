@@ -134,6 +134,73 @@ export class AdminService {
     }
   }
 
+  async getPodhupudetailsList() {
+    try{
+      const list = await this.podupudetailsModel.find();
+      if(list.length > 0){
+        const customerDetails = await this.podupudetailsModel.aggregate([
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customerId",
+              foreignField: "customerId",
+              as: "customerId",
+            }
+          }
+        ]);
+        return {
+          statusCode: HttpStatus.OK,
+          message: "List of podupus",
+          data: customerDetails,
+        }
+      }  else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Didn't find any podupus",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async getPodhupuDetailsbyid(req: podupuDetailsDto) {
+    try{
+      const getDetails = await this.podupudetailsModel.findOne({podupuDetailsId: req.podupuDetailsId});
+      if(getDetails){
+        const getCustomer = await this.podupudetailsModel.aggregate([
+          {$match: {podupuDetailsId: req.podupuDetailsId}},
+          {
+            $lookup: {
+            from: "customers",
+            localField: "customerId",
+            foreignField: "customerId",
+            as: "customerId",
+            }
+          }
+        ]);
+        return {
+          statusCode: HttpStatus.OK,
+          message: "PodupuDetails of a customer",
+          data: getCustomer,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Not Found Details",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   async createPodupu() {
     try {
       const currentDate = new Date();
@@ -233,5 +300,182 @@ export class AdminService {
     }
   }
 
+  async updatepodupustatus(req: podhupuDto) {
+    try{
+      const findPodhupu = await this.podupuModel.findOne({podhuId: req.podhuId});
+      if(findPodhupu.podhupuAmount === req.podhupuAmount) {
+        const changeStatus = await this.podupuModel.updateOne({podhuId: req.podhuId},{
+          $set: {
+            status: req.status,
+          }
+        });
+        if(changeStatus) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: "Podupu has been payed",
+            data: changeStatus,
+          }
+        } else{
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: "Invalid Request",
+          }
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Please pay total amount",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        messagge: error,
+      }
+    }
+  }
+
+  async podupusListByCustomer(req: podhupuDto) {
+    try{
+      const list = await this.podupuModel.find({customerId: req.customerId});
+      if(list.length > 0 ) {
+        const details = await this.podupuModel.aggregate([
+          {$match: {customerId: req.customerId}},
+        {
+          $lookup: {
+            from: "customers",
+            localField: "customerId",
+            foreignField: "customerId",
+            as: "customerId",
+          }
+        }
+        ]);
+        return {
+          statusCode: HttpStatus.OK,
+          message: "List of podupu of a customer",
+          data: details,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Didn't Find any podupus",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async customerPodupuBalance(req: podhupuDto) {
+    try{
+      const findCustomer = await this.podupuModel.find({customerId: req.customerId});
+      if(findCustomer.length > 0) {
+        const balance = findCustomer.reduce((accumulator, currentValue) => {
+          return accumulator + currentValue.Total;
+        }, 0);
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Total podhupu Balance of a customer",
+          data: balance,
+        }
+      } 
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async paidPodupu(req: podhupuDto) {
+    try{
+      const podupuList = await this.podupuModel.find();
+      if(podupuList.length > 0) {
+        const customerDetails = await this.podupuModel.aggregate([
+          {$match: {status: "paid"}},
+          {$lookup: {
+            from: "customers",
+            localField: "customerId",
+            foreignField: "customerId",
+            pipeline: [
+              {
+                $unwind: '$customerId',
+              },
+              {
+                $match: { sanghamId: req.sanghamId },
+              },
+              {
+                $lookup: {
+                  from: 'sanghams',
+                  localField: 'sanghamId',
+                  foreignField: 'sanghamId',
+                  as: 'sanghamId',
+                },
+              },
+            ],
+            as: "customerId",
+          }}
+        ]);
+        
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Paid Podhupu",
+          data: customerDetails,
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async unpaidPodupu(req: podhupuDto) {
+    try{
+      const podupuList = await this.podupuModel.find();
+      if(podupuList.length > 0) {
+        const customerDetails = await this.podupuModel.aggregate([
+          {$match: {status: "unpaid"}},
+          {$lookup: {
+            from: "customers",
+            localField: "customerId",
+            foreignField: "customerId",
+            pipeline: [
+              {
+                $unwind: '$customerId',
+              },
+              {
+                $match: { sanghamId: req.sanghamId },
+              },
+              {
+                $lookup: {
+                  from: 'sanghams',
+                  localField: 'sanghamId',
+                  foreignField: 'sanghamId',
+                  as: 'sanghamId',
+                },
+              },
+            ],
+            as: "customerId",
+          }}
+        ]);
+        
+        return {
+          statusCode: HttpStatus.OK,
+          message: "UnPaid Podhupu",
+          data: customerDetails,
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { adminDto } from './dto/admin.dto';
 import { podupuDetailsDto } from './dto/podhupuDetails.dto';
@@ -49,6 +49,32 @@ export class AdminController {
     }
   }
 
+  @Get('/getpodupudetailslist')
+  async podupudetailsList() {
+    try{
+      const list = await this.adminService.getPodhupudetailsList();
+      return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/getpodupuDetailsbyid')
+  async getPodhupuDetailsById(@Body() req: podupuDetailsDto) {
+    try{
+      const details = await this.adminService.getPodhupuDetailsbyid(req);
+      return details
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  } 
+
   // @Cron('0 * * * * *')
   @Post('/addcustomerpodupus')
   async openForBusiness()  {
@@ -61,5 +87,70 @@ export class AdminController {
           message: error,
         }
       }
+  }
+
+  @Post('/podupupaystatus')
+  async podupustatus(@Body() req: podhupuDto) {
+    try{
+      const changeStatus = await this.adminService.updatepodupustatus(req);
+      return changeStatus
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/podupulistbycustomer')
+  async listOfPodupusByCustomer(@Body() req: podhupuDto) {
+    try{
+      const list = await this.adminService.podupusListByCustomer(req);
+      return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/customerpodupubalance')
+  async customerPodhupuBalance(@Body() req: podhupuDto) {
+    try{
+      const balance = await this.adminService.customerPodupuBalance(req);
+      return balance
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/paidpodupulistbysangham')
+  async paidPodupuListOfSangham(@Body() req: podhupuDto) {
+    try{
+      const paidList = await this.adminService.paidPodupu(req);
+      return paidList
+    }catch(error) {
+      return{
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/unpaidpodupulistbysangham')
+  async unpaidPodupuListOfSangham(@Body() req: podhupuDto) {
+    try{
+      const paidList = await this.adminService.unpaidPodupu(req);
+      return paidList
+    }catch(error) {
+      return{
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
   }
 }

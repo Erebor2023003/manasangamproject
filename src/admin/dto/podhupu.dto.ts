@@ -17,4 +17,6 @@ export class podhupuDto{
     interest: number
     @ApiProperty()
     status: string
+    @ApiProperty()
+    sanghamId: string
 }
