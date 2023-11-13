@@ -49,10 +49,11 @@ export class AdminController {
     }
   }
 
-  @Cron('0 * * * * *')
+  // @Cron('0 * * * * *')
+  @Post('/addcustomerpodupus')
   async openForBusiness()  {
       try{
-        const addpodhupurecord = await this.adminService.createPodupu();
+        const addpodhupurecord = await this.adminService.updatePodupu();
         return addpodhupurecord
       } catch(error) {
         return {
