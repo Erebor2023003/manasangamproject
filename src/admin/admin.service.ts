@@ -174,57 +174,6 @@ export class AdminService {
       };
     }
   }
-  
-
-  // async updatePodupu() {
-  //   try {
-  //     const currentDate = new Date();
-  //     const currentDateFormatted = format(currentDate, 'dd-MM-yyyy');
-  //     const lastMonth = subMonths(currentDate, 1);
-  //     // console.log(lastMonth);
-
-  //     const podupuDetails = await this.podupuModel.find().exec();
-  //     // console.log(podupuDetails);
-
-  //     for (const detail of podupuDetails) {
-  //       // const customerStartDate = parse(detail.date, 'dd-MM-yyyy', new Date());
-  //       const inputDate = new Date(detail.date);
-
-  //       // Format the date to 'YYYY-MM-DDTHH:mm:ss.sssZ' format
-  //       const formattedDate = inputDate.toISOString();
-  //       // const formattedStartDate = format(customerStartDate, 'dd-MM-yyyy');
-  //       console.log('customerStartDate:', inputDate);
-  //       console.log('lastMonth:', lastMonth);
-  //       console.log('isSameDay:', isSameDay(inputDate, lastMonth));
-  //       console.log(detail.status);
-
-  //       if (isSameDay(inputDate, lastMonth)) {
-  //         if (detail.status === 'unpaid') {
-  //           const difference = differenceInMonths(inputDate, currentDate);
-  //           console.log(difference);
-  //           const podupuDetails = await this.podupudetailsModel.findOne({
-  //             customerId: detail.customerId,
-  //           });
-  //           const fine =
-  //             detail.podhupuAmount * (podupuDetails.fine / 100) * -difference;
-  //           const podupuRecordUpdate = await this.podupuModel.updateOne({
-  //             $set: {
-  //               fine: fine,
-  //               Total: detail.podhupuAmount + fine,
-  //             },
-  //           });
-  //           return podupuRecordUpdate;
-  //         }
-  //       }
-  //     }
-  //   } catch (error) {
-  //     return {
-  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-  //       message: error,
-  //     };
-  //   }
-  // }
-
 
   async updatePodupu() {
     try {
@@ -283,59 +232,6 @@ export class AdminService {
       };
     }
   }
-  
 
-// async updatePodupu() {
-//   try {
-//     const currentDate = new Date();
-//     const podupuDetails = await this.podupudetailsModel.find().exec();
-
-//     for (const detail of podupuDetails) {
-//       const customerStartDate = parse(detail.startDate, 'dd-MM-yyyy', new Date());
-//       const podupuPeriodEnd = addMonths(customerStartDate, detail.podupuPeriod);
-
-//       // Check if the day of the month in startDate matches today's day
-//       // and if the current date is within the specified podupuPeriod
-//       if (
-//         getDate(customerStartDate) === getDate(currentDate) &&
-//         currentDate <= podupuPeriodEnd
-//       ) {
-//         // Find and update unpaid podupuRecords
-//         const unpaidRecords = await this.podupuModel.find({
-//           customerId: detail.customerId,
-//           status: "unpaid", // Filter for unpaid records
-//         }).exec();
-//         // console.log(unpaidRecords);
-//         for (const record of unpaidRecords) {
-//           // console.log(record)
-//           const recordDate = parse(record.date, 'EEE MMM dd yyyy HH:mm:ss zZZZ', new Date());
-//           console.log(recordDate);
-//           const daysLate = differenceInDays(currentDate, recordDate);
-//           console.log(daysLate);
-//           // Calculate fine based on your logic (for example, $1 per day late)
-//           const fine = daysLate * 1;
-//           console.log(fine);
-
-//           // Update the podupuRecord with the calculated fine
-//           await this.podupuModel.updateOne(
-//             { podhuId: record.podhuId },
-//             { fine: fine },
-//             { Total: record.podhupuAmount + fine},
-//           ).exec();
-//           // return {
-//           //   statusCode: HttpStatus.OK,
-//           //   message: 'Podupus records updated successfully.',
-//           // };
-//         }
-//       }
-//     }
-
-//   } catch (error) {
-//     return {
-//       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-//       message: error,
-//     };
-//   }
-// }
 
 }
