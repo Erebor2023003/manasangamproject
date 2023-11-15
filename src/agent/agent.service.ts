@@ -233,6 +233,20 @@ export class AgentService {
                 as: 'agentId',
               },
             },
+            {
+              $lookup: {
+                from: 'customers', // Assuming the name of your customer collection
+                localField: 'sanghamId',
+                foreignField: 'sanghamId',
+                as: 'customers',
+              },
+            },
+            {
+              $addFields: {
+                customerCount: { $size: '$customers' },
+              },
+            },
+            { $project: { customers: 0 } },
           ]);
           return {
             statusCode: HttpStatus.OK,
