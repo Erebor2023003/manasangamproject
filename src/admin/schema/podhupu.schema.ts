@@ -21,6 +21,8 @@ export class Podupu extends Document{
     interest: number
     @Prop({default: PodupuStatus.UNPAID})
     status: string
+    @Prop()
+    sanghamId: string
 }
 
 export const podupuSchema = SchemaFactory.createForClass(Podupu);

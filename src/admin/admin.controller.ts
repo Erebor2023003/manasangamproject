@@ -79,7 +79,7 @@ export class AdminController {
   @Post('/addcustomerpodupus')
   async openForBusiness()  {
       try{
-        const addpodhupurecord = await this.adminService.updatePodupu();
+        const addpodhupurecord = await this.adminService.createPodupu();
         return addpodhupurecord
       } catch(error) {
         return {

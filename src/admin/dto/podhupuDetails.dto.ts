@@ -4,7 +4,7 @@ export class podupuDetailsDto{
     @ApiProperty()
     podupuDetailsId: string
     @ApiProperty()
-    customerId: string
+    sanghamId: string
     @ApiProperty()
     monthlyAmount: number
     @ApiProperty()

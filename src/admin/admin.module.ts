@@ -12,6 +12,7 @@ import {
   podhupuDetailsSchema,
 } from './schema/podhupuDetails.schema';
 import { Podupu, podupuSchema } from './schema/podhupu.schema';
+import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
 
 
 @Module({
@@ -20,6 +21,7 @@ import { Podupu, podupuSchema } from './schema/podhupu.schema';
       { name: Admin.name, schema: adminSchema },
       { name: PodupuDetails.name, schema: podhupuDetailsSchema },
       { name: Podupu.name, schema: podupuSchema },
+      { name: Customer.name, schema: customerSchema },
     ]),
   ],
   controllers: [AdminController],

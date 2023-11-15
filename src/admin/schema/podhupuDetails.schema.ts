@@ -7,7 +7,7 @@ export class PodupuDetails extends Document{
     @Prop({default: uuid})
     podupuDetailsId: string
     @Prop()
-    customerId: string
+    sanghamId: string
     @Prop()
     monthlyAmount: number
     @Prop()

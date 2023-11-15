@@ -18,7 +18,9 @@ import {
   addMonths,
   isSameMonth,
   getDate,
+  addDays,
 } from 'date-fns';
+import { Customer } from 'src/customer/schema/customer.schema';
 
 @Injectable()
 export class AdminService {
@@ -28,6 +30,8 @@ export class AdminService {
     private readonly podupudetailsModel: Model<PodupuDetails>,
     @InjectModel(Podupu.name)
     private readonly podupuModel: Model<Podupu>,
+    @InjectModel(Customer.name)
+    private readonly customerModel: Model<Customer>,
     private readonly authService: AuthService,
   ) {}
 
@@ -108,7 +112,7 @@ export class AdminService {
   async addpodupuDetails(req: podupuDetailsDto) {
     try {
       const findCustomer = await this.podupudetailsModel.findOne({
-        customerId: req.customerId,
+        sanghamId: req.sanghamId,
       });
       // const findUser = await this.customerModel.findOne({customerId: req.customerId});
       if (!findCustomer) {
@@ -123,7 +127,7 @@ export class AdminService {
       } else {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: 'Customer Details Already Added to this customer',
+          message: 'Podupu Details Already Added to this sangham',
         };
       }
     } catch (error) {
@@ -135,101 +139,153 @@ export class AdminService {
   }
 
   async getPodhupudetailsList() {
-    try{
+    try {
       const list = await this.podupudetailsModel.find();
-      if(list.length > 0){
+      if (list.length > 0) {
         const customerDetails = await this.podupudetailsModel.aggregate([
           {
             $lookup: {
-              from: "customers",
-              localField: "customerId",
-              foreignField: "customerId",
-              as: "customerId",
-            }
-          }
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customerId',
+            },
+          },
         ]);
         return {
           statusCode: HttpStatus.OK,
-          message: "List of podupus",
+          message: 'List of podupus',
           data: customerDetails,
-        }
-      }  else {
+        };
+      } else {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: "Didn't find any podupus",
-        }
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   async getPodhupuDetailsbyid(req: podupuDetailsDto) {
-    try{
-      const getDetails = await this.podupudetailsModel.findOne({podupuDetailsId: req.podupuDetailsId});
-      if(getDetails){
+    try {
+      const getDetails = await this.podupudetailsModel.findOne({
+        podupuDetailsId: req.podupuDetailsId,
+      });
+      if (getDetails) {
         const getCustomer = await this.podupudetailsModel.aggregate([
-          {$match: {podupuDetailsId: req.podupuDetailsId}},
+          { $match: { podupuDetailsId: req.podupuDetailsId } },
           {
             $lookup: {
-            from: "customers",
-            localField: "customerId",
-            foreignField: "customerId",
-            as: "customerId",
-            }
-          }
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customerId',
+            },
+          },
         ]);
         return {
           statusCode: HttpStatus.OK,
-          message: "PodupuDetails of a customer",
+          message: 'PodupuDetails of a customer',
           data: getCustomer,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Not Found Details",
-        }
+          message: 'Not Found Details',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   async createPodupu() {
     try {
       const currentDate = new Date();
+      // currentDate.setHours(0, 0, 0, 0);
       const podupuDetails = await this.podupudetailsModel.find().exec();
-  
-      for (const detail of podupuDetails) {
-        const customerStartDate = parse(detail.startDate, 'dd-MM-yyyy', new Date());
-        const podupuPeriodEnd = addMonths(customerStartDate, detail.podupuPeriod);
-  
-        // Check if the day of the month in startDate matches today's day
-        // and if the current date is within the specified podupuPeriod
+
+      const createPodupuPromises = podupuDetails.map(async (detail) => {
+        const customerStartDate = parse(
+          detail.startDate,
+          'dd-MM-yyyy',
+          new Date(),
+        );
+        const podupuPeriodEnd = addMonths(
+          customerStartDate,
+          detail.podupuPeriod,
+        );
         if (
           getDate(customerStartDate) === getDate(currentDate) &&
           currentDate <= podupuPeriodEnd
         ) {
-          // Create a podupus record for today's date
-          const podupuRecord = new this.podupuModel({
-            customerId: detail.customerId,
-            podhupuAmount: detail.monthlyAmount,
-            date: currentDate,
-            fine: 0,
-            interest: 0,
-            Total: detail.monthlyAmount,
+          // console.log(detail);
+          const findDetails = await this.customerModel.find({
+            sanghamId: detail.sanghamId,
           });
-          console.log(podupuRecord);
-          await podupuRecord.save();
+          // console.log(findDetails);
+          const createPodupuRecords = findDetails.map(async (sanghamData) => {
+            const customerStartDate = parse(
+              detail.startDate,
+              'dd-MM-yyyy',
+              new Date(),
+            );
+            const lastMonthStartDate = addMonths(customerStartDate, -1);
+            const lastMonthEndDate = addDays(customerStartDate, -1);
+
+            // Retrieve the last month's podupu record for the specific customer
+            const lastMonthRecord = await this.podupuModel
+              .find({
+                sanghamId: sanghamData.sanghamId,
+                customerId: sanghamData.customerId,
+                date: {
+                  $gte: lastMonthStartDate,
+                  $lt: customerStartDate, // Exclude the current month's start date
+                },
+              })
+              .sort({ date: -1 }) // Sort in descending order to get the latest record first
+              .limit(1) // Limit to only one document
+              .exec();
+
+            console.log('lastMonthRecord:', lastMonthRecord[0]); // Add this log for debugging
+
+            console.log('lastMonthStartDate', lastMonthStartDate);
+            console.log('lastMonthEndDate', lastMonthEndDate);
+            let totalInterest = 0;
+            if (lastMonthRecord.length > 0) {
+              // Calculate interest based on your interest rate logic
+              const interestRate = detail.interest / 100; // Replace with your actual interest rate
+              const lastMonthInterest =
+                interestRate * lastMonthRecord[0].podhupuAmount;
+              totalInterest = lastMonthInterest + lastMonthRecord[0].interest;
+            }
+            const podupuRecord = new this.podupuModel({
+              sanghamId: sanghamData.sanghamId,
+              customerId: sanghamData.customerId,
+              podhupuAmount: detail.monthlyAmount,
+              date: currentDate,
+              fine: 0,
+              interest: totalInterest,
+              Total: detail.monthlyAmount,
+            });
+            // console.log(podupuRecord);
+            await podupuRecord.save();
+          });
+
+          await Promise.all(createPodupuRecords);
         }
-      }
-  
+      });
+
+      await Promise.all(createPodupuPromises);
+
       return {
         statusCode: HttpStatus.OK,
         message: 'Podupus records created successfully.',
@@ -246,20 +302,20 @@ export class AdminService {
     try {
       const currentDate = new Date();
       const lastMonth = subMonths(currentDate, 1);
-  
+
       const podupuDetails = await this.podupuModel.find().exec();
-  
+
       for (const detail of podupuDetails) {
         const inputDate = new Date(detail.date);
-  
+
         // Calculate the difference in days
         const differInDays = differenceInDays(currentDate, inputDate);
-  
+
         console.log('customerStartDate:', inputDate);
         console.log('lastMonth:', lastMonth);
         console.log('differenceInDays:', differInDays);
         console.log(detail.status);
-  
+
         if (differInDays >= 30) {
           if (detail.status === 'unpaid') {
             const monthsDifference = Math.floor(differInDays / 30);
@@ -267,10 +323,12 @@ export class AdminService {
             const podupuDetails = await this.podupudetailsModel.findOne({
               customerId: detail.customerId,
             });
-  
+
             const fine =
-              detail.podhupuAmount * (podupuDetails.fine / 100) * monthsDifference;
-  
+              detail.podhupuAmount *
+              (podupuDetails.fine / 100) *
+              monthsDifference;
+
             const podupuRecordUpdate = await this.podupuModel.updateMany(
               {
                 podhuId: detail.podhuId,
@@ -281,16 +339,18 @@ export class AdminService {
                   fine: fine,
                   Total: detail.podhupuAmount + fine,
                 },
-              }
+              },
             );
-  
-            console.log(`Updated ${podupuRecordUpdate.modifiedCount} record(s)`);
-  
+
+            console.log(
+              `Updated ${podupuRecordUpdate.modifiedCount} record(s)`,
+            );
+
             // You may choose to return something here if needed
           }
         }
       }
-  
+
       // You may return something here if needed
     } catch (error) {
       return {
@@ -301,181 +361,187 @@ export class AdminService {
   }
 
   async updatepodupustatus(req: podhupuDto) {
-    try{
-      const findPodhupu = await this.podupuModel.findOne({podhuId: req.podhuId});
-      if(findPodhupu.podhupuAmount === req.podhupuAmount) {
-        const changeStatus = await this.podupuModel.updateOne({podhuId: req.podhuId},{
-          $set: {
-            status: req.status,
-          }
-        });
-        if(changeStatus) {
+    try {
+      const findPodhupu = await this.podupuModel.findOne({
+        podhuId: req.podhuId,
+      });
+      if (findPodhupu.podhupuAmount === req.podhupuAmount) {
+        const changeStatus = await this.podupuModel.updateOne(
+          { podhuId: req.podhuId },
+          {
+            $set: {
+              status: req.status,
+            },
+          },
+        );
+        if (changeStatus) {
           return {
             statusCode: HttpStatus.OK,
-            message: "Podupu has been payed",
+            message: 'Podupu has been payed',
             data: changeStatus,
-          }
-        } else{
+          };
+        } else {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
-            message: "Invalid Request",
-          }
+            message: 'Invalid Request',
+          };
         }
       } else {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: "Please pay total amount",
-        }
+          message: 'Please pay total amount',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         messagge: error,
-      }
+      };
     }
   }
 
   async podupusListByCustomer(req: podhupuDto) {
-    try{
-      const list = await this.podupuModel.find({customerId: req.customerId});
-      if(list.length > 0 ) {
+    try {
+      const list = await this.podupuModel.find({ customerId: req.customerId });
+      if (list.length > 0) {
         const details = await this.podupuModel.aggregate([
-          {$match: {customerId: req.customerId}},
-        {
-          $lookup: {
-            from: "customers",
-            localField: "customerId",
-            foreignField: "customerId",
-            as: "customerId",
-          }
-        }
+          { $match: { customerId: req.customerId } },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customerId',
+            },
+          },
         ]);
         return {
           statusCode: HttpStatus.OK,
-          message: "List of podupu of a customer",
+          message: 'List of podupu of a customer',
           data: details,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           message: "Didn't Find any podupus",
-        }
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   async customerPodupuBalance(req: podhupuDto) {
-    try{
-      const findCustomer = await this.podupuModel.find({customerId: req.customerId});
-      if(findCustomer.length > 0) {
+    try {
+      const findCustomer = await this.podupuModel.find({
+        customerId: req.customerId,
+      });
+      if (findCustomer.length > 0) {
         const balance = findCustomer.reduce((accumulator, currentValue) => {
           return accumulator + currentValue.Total;
         }, 0);
         return {
           statusCode: HttpStatus.OK,
-          message: "Total podhupu Balance of a customer",
+          message: 'Total podhupu Balance of a customer',
           data: balance,
-        }
-      } 
-    } catch(error) {
+        };
+      }
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   async paidPodupu(req: podhupuDto) {
-    try{
-      const podupuList = await this.podupuModel.find();
-      if(podupuList.length > 0) {
-        const customerDetails = await this.podupuModel.aggregate([
-          {$match: {status: "paid"}},
-          {$lookup: {
-            from: "customers",
-            localField: "customerId",
-            foreignField: "customerId",
-            pipeline: [
-              {
-                $unwind: '$customerId',
-              },
-              {
-                $match: { sanghamId: req.sanghamId },
-              },
-              {
-                $lookup: {
-                  from: 'sanghams',
-                  localField: 'sanghamId',
-                  foreignField: 'sanghamId',
-                  as: 'sanghamId',
-                },
-              },
-            ],
-            as: "customerId",
-          }}
+    try {
+      const podupuList = await this.podupuModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      if (podupuList.length > 0) {
+        const paidList = await this.podupuModel.aggregate([
+          { $match: { status: 'paid' } },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customerId',
+            },
+          },
         ]);
-        
-        return {
-          statusCode: HttpStatus.OK,
-          message: "Paid Podhupu",
-          data: customerDetails,
+        if (paidList.length > 0) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'Paid Podhupu',
+            data: paidList,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found paid list',
+          };
         }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any podupus by this sangham',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   async unpaidPodupu(req: podhupuDto) {
-    try{
-      const podupuList = await this.podupuModel.find();
-      if(podupuList.length > 0) {
-        const customerDetails = await this.podupuModel.aggregate([
-          {$match: {status: "unpaid"}},
-          {$lookup: {
-            from: "customers",
-            localField: "customerId",
-            foreignField: "customerId",
-            pipeline: [
-              {
-                $unwind: '$customerId',
-              },
-              {
-                $match: { sanghamId: req.sanghamId },
-              },
-              {
-                $lookup: {
-                  from: 'sanghams',
-                  localField: 'sanghamId',
-                  foreignField: 'sanghamId',
-                  as: 'sanghamId',
-                },
-              },
-            ],
-            as: "customerId",
-          }}
+    try {
+      const podupuList = await this.podupuModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      if (podupuList.length > 0) {
+        const paidList = await this.podupuModel.aggregate([
+          { $match: { status: 'unpaid' } },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customerId',
+            },
+          },
         ]);
-        
-        return {
-          statusCode: HttpStatus.OK,
-          message: "UnPaid Podhupu",
-          data: customerDetails,
+        if (paidList.length > 0) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'UnPaid Podhupu',
+            data: paidList,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found unpaid list',
+          };
         }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any podupus by this sangham',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
-
 }
