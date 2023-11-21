@@ -20,5 +20,11 @@ export class sanghamDto{
     @ApiProperty()
     endDate: string
     @ApiProperty()
-    location: string
+    longitude: string
+    @ApiProperty()
+    latitude: string
+    @ApiProperty()
+    address: string
+    @ApiProperty()
+    customersLimit: number
 }

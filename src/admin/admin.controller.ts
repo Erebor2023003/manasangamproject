@@ -4,6 +4,8 @@ import { adminDto } from './dto/admin.dto';
 import { podupuDetailsDto } from './dto/podhupuDetails.dto';
 import { Cron } from '@nestjs/schedule';
 import { podhupuDto } from './dto/podhupu.dto';
+import { depositDetailsDto } from './dto/depositDetails.dto';
+import { depositDto } from './dto/deposit.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -77,7 +79,7 @@ export class AdminController {
 
   // @Cron('0 * * * * *')
   @Post('/addcustomerpodupus')
-  async openForBusiness()  {
+  async addPodhupus()  {
       try{
         const addpodhupurecord = await this.adminService.createPodupu();
         return addpodhupurecord
@@ -88,6 +90,20 @@ export class AdminController {
         }
       }
   }
+
+    // @Cron('0 * * * * *')
+    @Post('/updatecustomerpodupus')
+    async updatePoshupus()  {
+        try{
+          const updatepodhupurecord = await this.adminService.updatePodupu();
+          return updatepodhupurecord
+        } catch(error) {
+          return {
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: error,
+          }
+        }
+    }
 
   @Post('/podupupaystatus')
   async podupustatus(@Body() req: podhupuDto) {
@@ -148,6 +164,58 @@ export class AdminController {
       return paidList
     }catch(error) {
       return{
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/adddepositdetails')
+  async addDepositDetails(@Body() req: depositDetailsDto) {
+    try{
+      const addDetails = await this.adminService.addDepositDetails(req);
+      return addDetails
+    } catch(error){
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Get('/getdepositdetails')
+  async getDepositDetails() {
+    try{
+      const list = await this.adminService.getDepositDetailsList();
+      return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/getGetDepositDetailsById')
+  async getDepositDetailsById(@Body() req:depositDetailsDto) {
+    try{
+      const details = await this.adminService.getDepositDetailsById(req);
+      return details
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/payDeposit')
+  async payDeposit(@Body() req: depositDto) {
+    try{
+      const adddeposit = await this.adminService.addDeposit(req);
+      return adddeposit
+    } catch(error) {
+      return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       }

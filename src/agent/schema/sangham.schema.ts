@@ -23,7 +23,13 @@ export class Sangham extends Document{
     @Prop()
     endDate: string
     @Prop()
-    location: string
+    longitude: string
+    @Prop()
+    latitude: string
+    @Prop()
+    address: string
+    @Prop()
+    customersLimit: number
 }
 
 export const sanghamSchema = SchemaFactory.createForClass(Sangham);

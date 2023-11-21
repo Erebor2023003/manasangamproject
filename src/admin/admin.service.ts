@@ -21,6 +21,11 @@ import {
   addDays,
 } from 'date-fns';
 import { Customer } from 'src/customer/schema/customer.schema';
+import { depositDetailsDto } from './dto/depositDetails.dto';
+import { DepositDetails } from './schema/depositDetails.schema';
+import { Deposit } from './schema/deposit.schema';
+import { Sangham } from 'src/agent/schema/sangham.schema';
+import { depositDto } from './dto/deposit.dto';
 
 @Injectable()
 export class AdminService {
@@ -32,6 +37,10 @@ export class AdminService {
     private readonly podupuModel: Model<Podupu>,
     @InjectModel(Customer.name)
     private readonly customerModel: Model<Customer>,
+    @InjectModel(DepositDetails.name)
+    private readonly depositdetailsModel: Model<DepositDetails>,
+    @InjectModel(Deposit.name)
+    private readonly depositModel: Model<Deposit>,
     private readonly authService: AuthService,
   ) {}
 
@@ -544,4 +553,297 @@ export class AdminService {
       };
     }
   }
+
+  async addDepositDetails(req: depositDetailsDto) {
+    try {
+      const findSangham = await this.depositdetailsModel.findOne({
+        sanghamId: req.sanghamId,
+      });
+      if (findSangham) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Sangham Deposit Details Already Added',
+        };
+      } else {
+        const adddetails = await this.depositdetailsModel.create(req);
+        if (adddetails) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'Deposit Details Added to the customer',
+            data: adddetails,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'Invalid Request',
+          };
+        }
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async getDepositDetailsList() {
+    try {
+      const getList = await this.depositdetailsModel.find();
+      if (getList.length > 0) {
+        const getListbySangham = await this.depositdetailsModel.aggregate([
+          {
+            $lookup: {
+              from: 'sanghams',
+              localField: 'sanghamId',
+              foreignField: 'sanghamId',
+              as: 'sanghamId',
+            },
+          },
+        ]);
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'List of DepositDetails',
+          data: getListbySangham,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          mesage: "Didn't have any Deposit Details",
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async getDepositDetailsById(req: depositDetailsDto) {
+    try {
+      const getDetails = await this.depositdetailsModel.findOne({
+        depositDetailsId: req.depositDetailsId,
+      });
+      if (getDetails) {
+        const getSanghamDetails = await this.depositdetailsModel.aggregate([
+          { $match: { sanghamId: getDetails.sanghamId } },
+          {
+            $lookup: {
+              from: 'sanghams',
+              localField: 'sanghamId',
+              foreignField: 'sanghamId',
+              as: 'sanghamId',
+            },
+          },
+        ]);
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Deposit Details of Sangham',
+          data: getSanghamDetails,
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async addDeposit(req: depositDto) {
+    try {
+      const findSangham = await this.depositdetailsModel.findOne({
+        sanghamId: req.sanghamId,
+      });
+      if(findSangham) {
+        if (findSangham.depositLimit < req.depositAmount) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'Deposit Amount exceeds the Limit',
+          };
+        } else if(!req.depositAmount || req.depositAmount === 0) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: "Please enter valid Amount",
+          }
+        } else {
+          const currentDate = new Date();
+          const customerStartDate = parse(
+            findSangham.depositDate,
+            'dd-MM-yyyy',
+            new Date(),
+          );
+          const lastMonthStartDate = addMonths(customerStartDate, -1); 
+          console.log("lastMonthStartDate", lastMonthStartDate);   
+          const lastMonthRecords = await this.depositModel.find({
+            sanghamId: req.sanghamId,
+            customerId: req.customerId,
+            date: { 
+              $lt: currentDate,
+              $gt: lastMonthStartDate
+            },
+          }).sort({ date: -1 }).limit(1).exec();
+
+          console.log("lastMonthRecords", lastMonthRecords);
+
+        
+        // Calculate interest based on the last month's interest and add it to the current deposit
+        let interest = 0;
+
+        let withdraw = 0;
+
+        let Total;
+        let lastMonthInterest = 0;
+        let lastMonthTotal = 0;
+        if(lastMonthRecords.length > 0) {
+          lastMonthInterest = lastMonthRecords[0].interest;
+          lastMonthTotal = lastMonthRecords[0].total;
+          console.log(lastMonthInterest);
+          console.log(lastMonthTotal);
+          withdraw = 0;
+          interest = lastMonthInterest + (lastMonthTotal * (findSangham.interest / 100));
+          Total = req.depositAmount + interest + lastMonthRecords[0].depositAmount - withdraw;
+        } else {
+        //   lastMonthInterest = 0;
+        //  lastMonthTotal = 0;
+        //  interest = 0;
+         Total = req.depositAmount;
+         withdraw = 0;
+        }
+
+        
+
+          const adddeposit = await this.depositModel.create({
+            sanghamId: req.sanghamId,
+            customerId: req.customerId,
+            depositAmount: req.depositAmount,
+            date: currentDate,
+            withdraw: 0,
+            interest: interest,
+            total: Total,
+          });
+          if (adddeposit) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'deposit Paid Successfully',
+              data: adddeposit,
+            };
+          } else {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: 'Invalid Request',
+            };
+          }
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Didn't found Sangham",
+        }
+      }
+      
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  // async addDeposit(req: depositDto) {
+  //   try {
+  //     const findSangham = await this.depositdetailsModel.findOne({
+  //       sanghamId: req.sanghamId,
+  //     });
+  
+  //     if (!findSangham) {
+  //       return {
+  //         statusCode: HttpStatus.NOT_FOUND,
+  //         message: "Didn't find Sangham",
+  //       };
+  //     }
+  
+  //     if (findSangham.depositLimit < req.depositAmount) {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Deposit Amount exceeds the Limit',
+  //       };
+  //     }
+  
+  //     if (!req.depositAmount || req.depositAmount === 0) {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Please enter a valid Amount',
+  //       };
+  //     }
+  
+  //     const currentDate = new Date();
+  //     const customerStartDate = parse(
+  //       findSangham.depositDate,
+  //       'dd-MM-yyyy',
+  //       new Date(),
+  //     );
+  //     const lastMonthStartDate = addMonths(customerStartDate, -1);
+  
+  //     let lastMonthRecords = await this.depositModel
+  //       .find({
+  //         sanghamId: req.sanghamId,
+  //         customerId: req.customerId,
+  //         date: {
+  //           $gte: lastMonthStartDate,
+  //           $lt: currentDate, // Exclude the current month's start date
+  //         },
+  //       })
+  //       .sort({ date: -1 })
+  //       .limit(1);
+  //       console.log("lastMonthRecords",lastMonthRecords);
+  //     // Check if there are last month records
+  //     let lastMonthInterest = 0;
+  //     let lastMonthTotal = 0;
+  //     if (lastMonthRecords.length > 0) {
+  //       lastMonthInterest = lastMonthRecords[0].interest;
+  //       lastMonthTotal = lastMonthRecords[0].total;
+  //       console.log(lastMonthInterest);
+  //     console.log(lastMonthTotal);
+  //     }
+      
+  
+  //     // Calculate interest based on the last month's interest and add it to the current deposit
+  //     const interest = lastMonthInterest + (lastMonthTotal * (findSangham.interest / 100));
+  
+  //     // Calculate total for the current deposit
+  //     const Total = req.depositAmount + lastMonthTotal + interest;
+  
+  //     // Create the new deposit record
+  //     const adddeposit = await this.depositModel.create({
+  //       sanghamId: req.sanghamId,
+  //       customerId: req.customerId,
+  //       depositAmount: req.depositAmount,
+  //       date: currentDate,
+  //       withdraw: 0,
+  //       interest: interest,
+  //       total: Total,
+  //     });
+  
+  //     if (adddeposit) {
+  //       return {
+  //         statusCode: HttpStatus.OK,
+  //         message: 'Deposit Paid Successfully',
+  //         data: adddeposit,
+  //       };
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Invalid Request',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
+  
 }

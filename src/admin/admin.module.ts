@@ -13,6 +13,9 @@ import {
 } from './schema/podhupuDetails.schema';
 import { Podupu, podupuSchema } from './schema/podhupu.schema';
 import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
+import { DepositDetails, depositDetailsSchema } from './schema/depositDetails.schema';
+import { Deposit, depositSchema } from './schema/deposit.schema';
+import { Sangham, sanghamSchema } from 'src/agent/schema/sangham.schema';
 
 
 @Module({
@@ -22,6 +25,8 @@ import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
       { name: PodupuDetails.name, schema: podhupuDetailsSchema },
       { name: Podupu.name, schema: podupuSchema },
       { name: Customer.name, schema: customerSchema },
+      { name: DepositDetails.name, schema: depositDetailsSchema },
+      { name: Deposit.name, schema: depositSchema },
     ]),
   ],
   controllers: [AdminController],

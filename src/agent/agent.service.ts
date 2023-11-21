@@ -224,7 +224,7 @@ export class AgentService {
         });
         if (agentSanghams.length > 0) {
           const sanghamsAgent = await this.sanghamModel.aggregate([
-            { $match: { agentId:findAgent.agentId } },
+            { $match: { agentId: findAgent.agentId } },
             {
               $lookup: {
                 from: 'agents',
@@ -243,11 +243,29 @@ export class AgentService {
             },
             {
               $addFields: {
-                customerCount: { $size: '$customers' },
+                customerCount: { $size: "$customers" },
               },
             },
-            { $project: { customers: 0 } },
+            {
+              $unwind: '$customerCount'
+            },
+            {
+              $addFields: {
+                percentage: {
+                  $multiply: [
+                    { $divide: ['$customerCount', '$customersLimit'] },
+                    100,
+                  ],
+                },
+              }
+            },
+            {
+              $project: {
+                customers: 0,
+              },
+            },
           ]);
+          
           return {
             statusCode: HttpStatus.OK,
             message: 'Sanghams of an Agent',
@@ -274,38 +292,42 @@ export class AgentService {
   }
 
   async getSanghamDetails(req: sanghamDto) {
-    try{
-      const getDetails = await this.sanghamModel.findOne({sanghamId: req.sanghamId});
-      if(getDetails) {
-        const count = await this.customerModel.find({sanghamId: req.sanghamId}).count();
+    try {
+      const getDetails = await this.sanghamModel.findOne({
+        sanghamId: req.sanghamId,
+      });
+      if (getDetails) {
+        const count = await this.customerModel
+          .find({ sanghamId: req.sanghamId })
+          .count();
         const getagentdetails = await this.sanghamModel.aggregate([
-          {$match: {sanghamId: getDetails.sanghamId}},
+          { $match: { sanghamId: getDetails.sanghamId } },
           {
             $lookup: {
-              from: "agents",
-              localField: "agentId",
-              foreignField: "agentId",
-              as: "agentId",
-            }
-          }
+              from: 'agents',
+              localField: 'agentId',
+              foreignField: 'agentId',
+              as: 'agentId',
+            },
+          },
         ]);
         return {
           statusCode: HttpStatus.OK,
-          message: "Sangham Details",
-          count: count + " " + "members",
+          message: 'Sangham Details',
+          count: count + ' ' + 'members',
           data: getagentdetails,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Sangham Not Found",
-        }
+          message: 'Sangham Not Found',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 }
