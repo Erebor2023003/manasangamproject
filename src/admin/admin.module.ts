@@ -16,6 +16,7 @@ import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
 import { DepositDetails, depositDetailsSchema } from './schema/depositDetails.schema';
 import { Deposit, depositSchema } from './schema/deposit.schema';
 import { Sangham, sanghamSchema } from 'src/agent/schema/sangham.schema';
+import { Withdraw, withdrawSchema } from './schema/withdraw.schema';
 
 
 @Module({
@@ -27,6 +28,7 @@ import { Sangham, sanghamSchema } from 'src/agent/schema/sangham.schema';
       { name: Customer.name, schema: customerSchema },
       { name: DepositDetails.name, schema: depositDetailsSchema },
       { name: Deposit.name, schema: depositSchema },
+      { name: Withdraw.name, schema: withdrawSchema },
     ]),
   ],
   controllers: [AdminController],

@@ -6,6 +6,7 @@ import { Cron } from '@nestjs/schedule';
 import { podhupuDto } from './dto/podhupu.dto';
 import { depositDetailsDto } from './dto/depositDetails.dto';
 import { depositDto } from './dto/deposit.dto';
+import { withdrawDto } from './dto/withdraw.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -196,7 +197,7 @@ export class AdminController {
     }
   }
 
-  @Post('/getGetDepositDetailsById')
+  @Post('/getDepositDetailsById')
   async getDepositDetailsById(@Body() req:depositDetailsDto) {
     try{
       const details = await this.adminService.getDepositDetailsById(req);
@@ -221,4 +222,57 @@ export class AdminController {
       }
     }
   }
+
+  // @Cron('0 * * * * *')
+  @Post('/depositCron')
+  async cronDeposit() {
+    try{
+      const cronjob = await this.adminService.depositCron();
+      return cronjob
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/depositslist')
+  async depositsList(@Body() req: depositDto) {
+    try{
+      const list = await this.adminService.getDepositsOfCustomer(req);
+      return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/deposithistory')
+  async depositHistory(@Body() req: depositDto) {
+    try{
+      const history = await this.adminService.depositHistoryList(req);
+      return history
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  // @Post('/withdrawdeposit')
+  // async depositWithdraw(@Body() req: withdrawDto) {
+  //   try{
+  //     const createWithdraw = await this.adminService.withdrawDeposit(req);
+  //     return createWithdraw
+  //   } catch(error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     }
+  //   }
+  // }
 }
