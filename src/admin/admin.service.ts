@@ -273,6 +273,7 @@ export class AdminService {
             let fine = 0;
 
             let totalInterest = 0;
+            let total = detail.monthlyAmount ;
             if (lastMonthRecord.length > 0) {
               if (lastMonthRecord[0].status === 'unpaid') {
                 const findSangham = await this.podupudetailsModel.findOne({
@@ -281,6 +282,7 @@ export class AdminService {
                 const fineDate = new Date(lastMonthRecord[0].date);
                 console.log(fineDate);
                 fine = lastMonthRecord[0].fine + findSangham.fine;
+                total = detail.monthlyAmount + lastMonthRecord[0].Total;
               }
               // Calculate interest based on your interest rate logic
               const interestRate = detail.interest / 100; // Replace with your actual interest rate
@@ -297,7 +299,7 @@ export class AdminService {
               date: currentDate,
               fine,
               interest: totalInterest,
-              Total: detail.monthlyAmount + fine,
+              Total: total + fine ,
             });
             // console.log(podupuRecord);
             await podupuRecord.save();
@@ -424,13 +426,20 @@ export class AdminService {
         console.log(podupuDate.getDate() === currentDate.getDate());
         console.log(podupuDate);
         console.log(podupuextraDay);
+        
         if (
           (podupuDate.getDate() === currentDate.getDate()) ||
           (podupuextraDay.getDate() === currentDate.getDate() &&
             podupuextraDay.getMonth() === currentDate.getMonth() &&
             podupuextraDay.getFullYear() === currentDate.getFullYear())
         ) {
-          if (req.podhupuAmount != findPodhupu[0].fine + findPodhupu[0].Total) {
+          if(findPodhupu[0].status === 'paid') {
+            return {
+              statusCode: HttpStatus.CONFLICT,
+              message: "Podupu for this month already paid",
+            }
+          }
+          if (req.podhupuAmount !=  findPodhupu[0].Total) {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               message: 'Please pay Correct Amount',
