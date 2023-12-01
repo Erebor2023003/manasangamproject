@@ -416,49 +416,63 @@ export class AdminService {
         });
         const parsepodupurecordDate = new Date(findPodhupu[0].date);
         console.log(parsepodupurecordDate);
-        console.log(podupuextraDay.getDate() === currentDate.getDate() &&
-        podupuextraDay.getMonth() === currentDate.getMonth() &&
-        podupuextraDay.getFullYear() === currentDate.getFullYear())
+        console.log(
+          podupuextraDay.getDate() === currentDate.getDate() &&
+            podupuextraDay.getMonth() === currentDate.getMonth() &&
+            podupuextraDay.getFullYear() === currentDate.getFullYear(),
+        );
+        console.log(podupuDate.getDate() === currentDate.getDate());
+        console.log(podupuDate);
+        console.log(podupuextraDay);
         if (
-          (podupuDate.getDate() === currentDate.getDate() &&
-          podupuDate.getMonth() === currentDate.getMonth() &&
-          podupuDate.getFullYear() === currentDate.getFullYear()) 
-          || 
+          (podupuDate.getDate() === currentDate.getDate()) ||
           (podupuextraDay.getDate() === currentDate.getDate() &&
-          podupuextraDay.getMonth() === currentDate.getMonth() &&
-          podupuextraDay.getFullYear() === currentDate.getFullYear())
+            podupuextraDay.getMonth() === currentDate.getMonth() &&
+            podupuextraDay.getFullYear() === currentDate.getFullYear())
         ) {
-          if(req.podhupuAmount != (findPodhupu[0].fine + findPodhupu[0].Total)) {
+          if (req.podhupuAmount != findPodhupu[0].fine + findPodhupu[0].Total) {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
-              message: "Please pay Correct Amount",
-            }
+              message: 'Please pay Correct Amount',
+            };
           } else {
-            const findPodupuRecord = await this.podupuModel.findOne({podhuId: findPodhupu[0].podhuId});
-            if(findPodupuRecord) {
-              const updatestatus = await this.podupuModel.updateMany({$and: [{sanghamId: findPodupuRecord.sanghamId},{customerId: findPodupuRecord.customerId}]},{
-                $set: {
-                  status: "paid"
-                }
+            const findPodupuRecord = await this.podupuModel.findOne({
+              podhuId: findPodhupu[0].podhuId,
+            });
+            if (findPodupuRecord) {
+              const updatestatus = await this.podupuModel.updateMany(
+                {
+                  $and: [
+                    { sanghamId: findPodupuRecord.sanghamId },
+                    { customerId: findPodupuRecord.customerId },
+                  ],
+                },
+                {
+                  $set: {
+                    status: 'paid',
+                  },
+                },
+              );
+              const updatedRecord = await this.podupuModel.findOne({
+                podhuId: findPodhupu[0].podhuId,
               });
-              const updatedRecord = await this.podupuModel.findOne({podhuId: findPodhupu[0].podhuId});
               return {
                 statusCode: HttpStatus.OK,
-                message: "Podhupu paid succesfully",
+                message: 'Podhupu paid succesfully',
                 data: updatedRecord,
-              }
+              };
             } else {
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
-                message: "Invalid podhupuId",
-              }
+                message: 'Invalid podhupuId',
+              };
             }
           }
         } else {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
-            message: "Podhupu for this month record not found",
-          }
+            message: 'Podhupu for this month record not found',
+          };
         }
       }
     } catch (error) {
@@ -1075,61 +1089,10 @@ export class AdminService {
 
   // async withdrawDeposit(req: withdrawDto) {
   //   try {
-  //     const findDeposit = await this.depositdetailsModel.findOne({
-  //       sanghamId: req.sanghamId,
+  //     const findDeposits = await this.depositModel.find({
+  //       $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
   //     });
-  //     const dateString = findDeposit.depositDate;
-
-  //     const [day, month, year] = dateString.split('-');
-  //     const numericYear = parseInt(year, 10);
-  //     const numericMonth = parseInt(month, 10);
-
-  //     const dateObject = new Date(
-  //       Date.UTC(numericYear, numericMonth - 1, +day),
-  //     );
-  //     const currentDate = new Date();
-  //     console.log('dateObject', dateObject.getDate());
-  //     console.log('currentDate', currentDate.getDate());
-  //     if (dateObject.getDate() === currentDate.getDate()) {
-  //       const saveFormattedDate = new Date(currentDate);
-  //       const formattedSavingDate = format(
-  //         saveFormattedDate,
-  //         "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
-  //       );
-  //       if(!req.amount || req.amount === 0) {
-  //         return {
-  //           statusCode: HttpStatus.BAD_REQUEST,
-  //           message: "Please valid amount to withdraw",
-  //         }
-  //       }
-  //       const lastMonthRecord = await this.depositModel.find({
-  //         sanghamId: req.sanghamId,
-  //         customerId: req.customerId,
-  //       });
-  //       lastMonthRecord.sort((a, b) => {
-  //         const dateA = new Date(a.date);
-  //         const dateB = new Date(b.date);
-
-  //         return dateB.getMonth() - dateA.getMonth();
-  //       });
-  //       console.log('lastMonthRecord', lastMonthRecord);
-  //       // const addWithdraw = await this.withdrawModel.create({
-  //       //   amount: req.amount,
-  //       //   date: formattedSavingDate,
-  //       //   sanghamId: req.sanghamId,
-  //       //   customerId: req.customerId,
-  //       // });
-  //       return {
-  //         statusCode: HttpStatus.OK,
-  //         message: 'Withdraw Added Successfully',
-  //         data: lastMonthRecord,
-  //       };
-  //     } else {
-  //       return {
-  //         statusCode: HttpStatus.BAD_REQUEST,
-  //         message: `Withdraw will be on ${dateObject.getDate()} of every month.`,
-  //       };
-  //     }
+  //     console.log(findDeposits);
   //   } catch (error) {
   //     return {
   //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
