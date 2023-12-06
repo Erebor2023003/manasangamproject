@@ -30,6 +30,7 @@ import { depositDto } from './dto/deposit.dto';
 import { utcToZonedTime } from 'date-fns-tz';
 import { withdrawDto } from './dto/withdraw.dto';
 import { Withdraw } from './schema/withdraw.schema';
+import moment from 'moment';
 
 @Injectable()
 export class AdminService {
@@ -46,7 +47,7 @@ export class AdminService {
     @InjectModel(Deposit.name)
     private readonly depositModel: Model<Deposit>,
     @InjectModel(Withdraw.name)
-    private readonly withdrawModel: Model<Deposit>,
+    private readonly withdrawModel: Model<Withdraw>,
     private readonly authService: AuthService,
   ) {}
 
@@ -273,7 +274,7 @@ export class AdminService {
             let fine = 0;
 
             let totalInterest = 0;
-            let total = detail.monthlyAmount ;
+            let total = detail.monthlyAmount;
             if (lastMonthRecord.length > 0) {
               if (lastMonthRecord[0].status === 'unpaid') {
                 const findSangham = await this.podupudetailsModel.findOne({
@@ -299,7 +300,7 @@ export class AdminService {
               date: currentDate,
               fine,
               interest: totalInterest,
-              Total: total + fine ,
+              Total: total + fine,
             });
             // console.log(podupuRecord);
             await podupuRecord.save();
@@ -426,20 +427,20 @@ export class AdminService {
         console.log(podupuDate.getDate() === currentDate.getDate());
         console.log(podupuDate);
         console.log(podupuextraDay);
-        
+
         if (
-          (podupuDate.getDate() === currentDate.getDate()) ||
+          podupuDate.getDate() === currentDate.getDate() ||
           (podupuextraDay.getDate() === currentDate.getDate() &&
             podupuextraDay.getMonth() === currentDate.getMonth() &&
             podupuextraDay.getFullYear() === currentDate.getFullYear())
         ) {
-          if(findPodhupu[0].status === 'paid') {
+          if (findPodhupu[0].status === 'paid') {
             return {
               statusCode: HttpStatus.CONFLICT,
-              message: "Podupu for this month already paid",
-            }
+              message: 'Podupu for this month already paid',
+            };
           }
-          if (req.podhupuAmount !=  findPodhupu[0].Total) {
+          if (req.podhupuAmount != findPodhupu[0].Total) {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               message: 'Please pay Correct Amount',
@@ -549,6 +550,33 @@ export class AdminService {
     }
   }
 
+  async searchCustomerPodhupudByDate(req: podhupuDto) {
+    try {
+      const parsedDate = new Date(req.date);
+      if (parsedDate.getDate() === 1) {
+        parsedDate.setDate(parsedDate.getDate() + 1);
+        parsedDate.setMonth(parsedDate.getMonth());
+        parsedDate.setFullYear(parsedDate.getFullYear());
+      }
+      console.log(parsedDate);
+      const searchlist = await this.podupuModel.find({
+        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+      });
+      const searchlistfilter = searchlist.filter((record) => {
+        const parsedRecordDate = new Date(record.date);
+        if (parsedRecordDate.getMonth() === parsedDate.getMonth()) {
+          return record;
+        }
+      });
+      return searchlistfilter;
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
   async paidPodupu(req: podhupuDto) {
     try {
       const podupuList = await this.podupuModel.find({
@@ -557,13 +585,18 @@ export class AdminService {
 
       if (podupuList.length > 0) {
         const paidList = await this.podupuModel.aggregate([
-          { $match: { status: 'paid' } },
+          { $match: { sanghamId: req.sanghamId, status: 'paid' } },
           {
             $lookup: {
               from: 'customers',
               localField: 'customerId',
               foreignField: 'customerId',
               as: 'customerId',
+            },
+          },
+          {
+            $match: {
+              'customer.firstName': req.customerName,
             },
           },
         ]);
@@ -747,13 +780,6 @@ export class AdminService {
         };
       }
 
-      if (findSangham.depositLimit < req.depositAmount) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: 'Deposit Amount exceeds the Limit',
-        };
-      }
-
       if (!req.depositAmount || req.depositAmount === 0) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
@@ -857,6 +883,7 @@ export class AdminService {
                 {
                   $set: {
                     depositAmount: req.depositAmount,
+                    date: currentDate,
                     total: req.depositAmount + findDeposit[0].total,
                   },
                 },
@@ -991,6 +1018,9 @@ export class AdminService {
 
             return dateB.getMonth() - dateA.getMonth();
           });
+          if (lastMonthRecord[0].total === 0) {
+            return 'Record will be create when the deposit is added';
+          }
           const findSangham = await this.depositdetailsModel.findOne({
             sanghamId: depositRecord.sanghamId,
           });
@@ -1096,17 +1126,200 @@ export class AdminService {
     }
   }
 
-  // async withdrawDeposit(req: withdrawDto) {
-  //   try {
-  //     const findDeposits = await this.depositModel.find({
-  //       $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-  //     });
-  //     console.log(findDeposits);
-  //   } catch (error) {
-  //     return {
-  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-  //       message: error,
-  //     };
-  //   }
-  // }
+  async withdrawDeposit(req: withdrawDto) {
+    try {
+      const findsanghamDeposit = await this.depositdetailsModel.findOne({
+        sanghamId: req.sanghamId,
+      });
+      const findDeposits = await this.depositModel.find({
+        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+      });
+      findDeposits.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+
+        return dateB.getMonth() - dateA.getMonth();
+      });
+      const dateString = findsanghamDeposit.depositDate;
+      const [day, month, year] = dateString.split('-');
+      const numericYear = parseInt(year, 10);
+      const numericMonth = parseInt(month, 10);
+
+      const depositDate = new Date(
+        Date.UTC(numericYear, numericMonth - 1, +day),
+      );
+      const currentDate = new Date();
+      const withdrawStartDate = new Date();
+      withdrawStartDate.setDate(depositDate.getDate());
+      withdrawStartDate.setMonth(currentDate.getMonth());
+      withdrawStartDate.setFullYear(currentDate.getFullYear());
+      const withdrawEndDate = new Date();
+      withdrawEndDate.setDate(withdrawStartDate.getDate() + 1);
+      console.log(withdrawStartDate);
+      console.log(withdrawEndDate);
+      console.log(withdrawStartDate <= currentDate);
+      console.log(currentDate <= withdrawEndDate);
+      console.log(
+        withdrawStartDate <= currentDate && currentDate <= withdrawEndDate,
+      );
+      if (withdrawStartDate <= currentDate && currentDate <= withdrawEndDate) {
+        console.log(findDeposits[0]);
+        if (req.amount > findDeposits[0].total) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'Amount exceed the withdrawable amount',
+          };
+        }
+        if (!req.amount || req.amount === 0) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'Enter the valid amount to withdraw',
+          };
+        }
+        const findWithdraw = await this.withdrawModel.find({
+          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+        });
+        findWithdraw.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+
+          return dateB.getMonth() - dateA.getMonth();
+        });
+        console.log('findWithdraw', findWithdraw);
+        if (findWithdraw.length > 0) {
+          const withdrawedDate = new Date(findWithdraw[0].date);
+          if (withdrawedDate === withdrawStartDate || withdrawEndDate) {
+            return {
+              statusCode: HttpStatus.CONFLICT,
+              message: 'Withdraw has been done for this month',
+            };
+          } else {
+            const withdrawing = await this.withdrawModel.create({
+              sanghamId: req.sanghamId,
+              customerId: req.customerId,
+              amount: req.amount,
+              date: currentDate,
+              total: 0,
+            });
+            if (withdrawing) {
+              const updateDeposit = await this.depositModel.updateOne(
+                { depositId: findDeposits[0].depositId },
+                {
+                  $set: {
+                    withdraw: req.amount,
+                    total: findDeposits[0].total - req.amount,
+                  },
+                },
+              );
+              const findWithdrawedDeposit = await this.depositModel.findOne({
+                depositId: findDeposits[0].depositId,
+              });
+              const updateTotal = await this.withdrawModel.updateOne(
+                { withdrawId: withdrawing.withdrawId },
+                {
+                  $set: {
+                    total: findWithdrawedDeposit.total,
+                  },
+                },
+              );
+              const withdrawDetails = await this.withdrawModel.findOne({
+                withdrawId: withdrawing.withdrawId,
+              });
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Withdraw Successfull',
+                data: withdrawDetails,
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.FAILED_DEPENDENCY,
+                message: 'Withdraw Failed',
+              };
+            }
+          }
+        } else {
+          const withdrawing = await this.withdrawModel.create({
+            sanghamId: req.sanghamId,
+            customerId: req.customerId,
+            amount: req.amount,
+            date: currentDate,
+            total: 0,
+          });
+          if (withdrawing) {
+            const updateDeposit = await this.depositModel.updateOne(
+              { depositId: findDeposits[0].depositId },
+              {
+                $set: {
+                  withdraw: req.amount,
+                  total: findDeposits[0].total - req.amount,
+                },
+              },
+            );
+            const findWithdrawedDeposit = await this.depositModel.findOne({
+              depositId: findDeposits[0].depositId,
+            });
+            const updateTotal = await this.withdrawModel.updateOne(
+              { withdrawId: withdrawing.withdrawId },
+              {
+                $set: {
+                  total: findWithdrawedDeposit.total,
+                },
+              },
+            );
+            const withdrawDetails = await this.withdrawModel.findOne({
+              withdrawId: withdrawing.withdrawId,
+            });
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Withdraw Successfull',
+              data: withdrawDetails,
+            };
+          } else {
+            return {
+              statusCode: HttpStatus.FAILED_DEPENDENCY,
+              message: 'Withdraw Failed',
+            };
+          }
+        }
+      } else {
+        return `withdraw can be done only dates ${withdrawStartDate} to ${withdrawEndDate}.`;
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async getWithdrawsbycustomer(req: withdrawDto) {
+    try {
+      const getWithdrawList = await this.withdrawModel.find({
+        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+      });
+      getWithdrawList.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+
+        return dateA.getMonth() - dateB.getMonth();
+      });
+      if (getWithdrawList.length > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'List of Withdraws by Customer',
+          data: getWithdrawList,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'No Withdraws found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
 }

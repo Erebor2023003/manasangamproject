@@ -19,4 +19,6 @@ export class podhupuDto{
     status: string
     @ApiProperty()
     sanghamId: string
+    @ApiProperty()
+    customerName: string
 }

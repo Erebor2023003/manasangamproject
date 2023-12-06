@@ -145,6 +145,19 @@ export class AdminController {
     }
   }
 
+  @Post('/searchcustomerpodupubydate')
+  async searchPodupuByDate(@Body() req: podhupuDto) {
+    try{
+      const list = await this.adminService.searchCustomerPodhupudByDate(req);
+      return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/paidpodupulistbysangham')
   async paidPodupuListOfSangham(@Body() req: podhupuDto) {
     try{
@@ -263,16 +276,29 @@ export class AdminController {
     }
   }
 
-  // @Post('/withdrawdeposit')
-  // async depositWithdraw(@Body() req: withdrawDto) {
-  //   try{
-  //     const createWithdraw = await this.adminService.withdrawDeposit(req);
-  //     return createWithdraw
-  //   } catch(error) {
-  //     return {
-  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-  //       message: error,
-  //     }
-  //   }
-  // }
+  @Post('/withdrawdeposit')
+  async depositWithdraw(@Body() req: withdrawDto) {
+    try{
+      const createWithdraw = await this.adminService.withdrawDeposit(req);
+      return createWithdraw
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/withdrawsbycustomer')
+  async getWithdrawList(@Body() req: withdrawDto) {
+    try{
+      const getwithdrawlist = await this.adminService.getWithdrawsbycustomer(req);
+      return getwithdrawlist
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  } 
 }

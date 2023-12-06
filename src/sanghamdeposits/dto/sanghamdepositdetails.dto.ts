@@ -1,12 +1,14 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class depositDetailsDto{
+export class sanghamdepositDetailsDto{
     @ApiProperty()
-    depositDetailsId: string
+    sanghamdepositDetailsId: string
     @ApiProperty()
     sanghamId: string
     @ApiProperty()
-    interest: number
+    agentId: string
+    @ApiProperty()
+    interestRate: number
     @ApiProperty()
     depositDate: string
 }

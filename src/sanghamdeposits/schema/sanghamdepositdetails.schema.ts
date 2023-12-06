@@ -3,19 +3,16 @@ import { Document } from "mongoose";
 import { v4 as uuid } from 'uuid';
 @Schema({ timestamps: true })
 
-export class Withdraw extends Document{
+export class SanghamDepositDetails extends Document{
     @Prop({default: uuid})
-    withdrawId: string
-    @Prop()
-    amount: number
+    sanghamdepositDetailsId: string
     @Prop()
     sanghamId: string
     @Prop()
-    customerId: string
+    agentId: string
     @Prop()
-    date: string
+    interestRate: number
     @Prop()
-    total: number
+    depositDate: string
 }
-
-export const withdrawSchema = SchemaFactory.createForClass(Withdraw);
+export const sanghamDepositDetailsSchema = SchemaFactory.createForClass(SanghamDepositDetails);

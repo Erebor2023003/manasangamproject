@@ -11,6 +11,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SanghamdepositsModule } from './sanghamdeposits/sanghamdeposits.module';
 
 @Module({
   imports: [AdminModule, AgentModule, CustomerModule,AuthModule,
@@ -27,7 +28,9 @@ import { ScheduleModule } from '@nestjs/schedule';
       }),
     }),
     
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
+    
+    SanghamdepositsModule
   ],
   controllers: [AppController],
   providers: [AppService,{

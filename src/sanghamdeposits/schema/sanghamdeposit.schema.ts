@@ -2,20 +2,22 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
 import { v4 as uuid } from 'uuid';
 @Schema({ timestamps: true })
-
-export class Withdraw extends Document{
+ 
+export class SanghamDeposit extends Document{
     @Prop({default: uuid})
-    withdrawId: string
+    sanghamDepositId: string
     @Prop()
-    amount: number
+    depositAmount: number
     @Prop()
     sanghamId: string
     @Prop()
-    customerId: string
+    agentId: string
     @Prop()
-    date: string
+    interest: number
     @Prop()
     total: number
+    @Prop()
+    date: string
 }
 
-export const withdrawSchema = SchemaFactory.createForClass(Withdraw);
+export const sanghamDepositSchema  = SchemaFactory.createForClass(SanghamDeposit);

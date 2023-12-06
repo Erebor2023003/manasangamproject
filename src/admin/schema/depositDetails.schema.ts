@@ -9,8 +9,6 @@ export class DepositDetails extends Document{
     @Prop()
     sanghamId: string
     @Prop()
-    depositLimit: number
-    @Prop()
     interest: number
     @Prop()
     depositDate: string
