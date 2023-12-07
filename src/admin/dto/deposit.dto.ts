@@ -17,4 +17,6 @@ export class depositDto{
     withdraw: number
     @ApiProperty()
     total: number
+    @ApiProperty()
+    customerName: string
 }

@@ -13,4 +13,6 @@ export class withdrawDto{
     date: string
     @ApiProperty()
     total: number
+    @ApiProperty()
+    customerName: string
 }

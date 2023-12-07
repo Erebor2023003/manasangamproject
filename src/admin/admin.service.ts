@@ -9,28 +9,22 @@ import { PodupuDetails } from './schema/podhupuDetails.schema';
 import { podhupuDto } from './dto/podhupu.dto';
 import { Podupu } from './schema/podhupu.schema';
 import {
-  isSameDay,
   format,
   parse,
   differenceInDays,
   subMonths,
-  differenceInMonths,
   addMonths,
-  isSameMonth,
   getDate,
   addDays,
-  startOfMonth,
+  setDate,
 } from 'date-fns';
 import { Customer } from 'src/customer/schema/customer.schema';
 import { depositDetailsDto } from './dto/depositDetails.dto';
 import { DepositDetails } from './schema/depositDetails.schema';
 import { Deposit } from './schema/deposit.schema';
-import { Sangham } from 'src/agent/schema/sangham.schema';
 import { depositDto } from './dto/deposit.dto';
-import { utcToZonedTime } from 'date-fns-tz';
 import { withdrawDto } from './dto/withdraw.dto';
 import { Withdraw } from './schema/withdraw.schema';
-import moment from 'moment';
 
 @Injectable()
 export class AdminService {
@@ -553,22 +547,37 @@ export class AdminService {
   async searchCustomerPodhupudByDate(req: podhupuDto) {
     try {
       const parsedDate = new Date(req.date);
-      if (parsedDate.getDate() === 1) {
-        parsedDate.setDate(parsedDate.getDate() + 1);
-        parsedDate.setMonth(parsedDate.getMonth());
-        parsedDate.setFullYear(parsedDate.getFullYear());
-      }
+      // if (parsedDate.getDate() === 1) {
+      //   parsedDate.setDate(parsedDate.getDate() + 1);
+      //   parsedDate.setMonth(parsedDate.getMonth());
+      //   parsedDate.setFullYear(parsedDate.getFullYear());
+      // }
       console.log(parsedDate);
       const searchlist = await this.podupuModel.find({
         $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
       });
       const searchlistfilter = searchlist.filter((record) => {
         const parsedRecordDate = new Date(record.date);
-        if (parsedRecordDate.getMonth() === parsedDate.getMonth()) {
+        if (
+          parsedRecordDate.getDate() === parsedDate.getDate() &&
+          parsedRecordDate.getMonth() === parsedDate.getMonth() &&
+          parsedRecordDate.getFullYear() === parsedDate.getFullYear()
+        ) {
           return record;
         }
       });
-      return searchlistfilter;
+      if (searchlistfilter.length > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Customer Podupu by date',
+          data: searchlistfilter,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Customer Podupu not found on that date',
+        };
+      }
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -584,28 +593,66 @@ export class AdminService {
       });
 
       if (podupuList.length > 0) {
-        const paidList = await this.podupuModel.aggregate([
-          { $match: { sanghamId: req.sanghamId, status: 'paid' } },
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          {
+            $match: {
+              $and: [{ status: 'paid' }, { sanghamId: req.sanghamId }],
+            },
+          },
           {
             $lookup: {
               from: 'customers',
               localField: 'customerId',
               foreignField: 'customerId',
-              as: 'customerId',
+              as: 'customer',
             },
           },
-          {
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
             $match: {
-              'customer.firstName': req.customerName,
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
             },
-          },
-        ]);
+          } as any);
+        }
+
+        const paidList = await this.podupuModel.aggregate(aggregationPipeline);
+        const count = await this.podupuModel
+          .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }] })
+          .count();
+
         if (paidList.length > 0) {
-          return {
-            statusCode: HttpStatus.OK,
-            message: 'Paid Podhupu',
-            data: paidList,
-          };
+          if (!req.date) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'List of paid records',
+              count: count,
+              data: paidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Paid Podhupu',
+              count: count,
+              data: filteredpaidList,
+            };
+          }
         } else {
           return {
             statusCode: HttpStatus.NOT_FOUND,
@@ -633,23 +680,66 @@ export class AdminService {
       });
 
       if (podupuList.length > 0) {
-        const paidList = await this.podupuModel.aggregate([
-          { $match: { status: 'unpaid' } },
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          {
+            $match: {
+              $and: [{ status: 'unpaid' }, { sanghamId: req.sanghamId }],
+            },
+          },
           {
             $lookup: {
               from: 'customers',
               localField: 'customerId',
               foreignField: 'customerId',
-              as: 'customerId',
+              as: 'customer',
             },
           },
-        ]);
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
+            $match: {
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
+            },
+          } as any);
+        }
+
+        const paidList = await this.podupuModel.aggregate(aggregationPipeline);
+        const count = await this.podupuModel
+          .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'unpaid' }] })
+          .count();
+
         if (paidList.length > 0) {
-          return {
-            statusCode: HttpStatus.OK,
-            message: 'UnPaid Podhupu',
-            data: paidList,
-          };
+          if (!req.date) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'List of paid records',
+              count: count,
+              data: paidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Unpaid Podhupus',
+              count: count,
+              data: filteredpaidList,
+            };
+          }
         } else {
           return {
             statusCode: HttpStatus.NOT_FOUND,
@@ -660,6 +750,37 @@ export class AdminService {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           message: 'Not found any podupus by this sangham',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async getSanghamPodhupuBalance(req: podhupuDto) {
+    try {
+      const balance = await this.podupuModel.find({
+        $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }],
+      });
+      if (balance.length > 0) {
+        // Use reduce to sum up podhupuAmount and fine
+        const totalAmount = balance.reduce((acc, current) => {
+          const podhupuAmount = current.podhupuAmount || 0;
+          const fine = current.fine || 0;
+          return acc + podhupuAmount + fine;
+        }, 0);
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Sangham Podhupu',
+          data: totalAmount,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Sangham Podupus Not Found',
         };
       }
     } catch (error) {
@@ -852,21 +973,29 @@ export class AdminService {
               ' of every month.',
           };
         } else {
-          const findDeposit = await this.depositModel.find({
-            $and: [
-              { sanghamId: req.sanghamId },
-              { customerId: req.customerId },
-            ],
-          });
-          findDeposit.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
+          const findDeposit = await this.depositModel
+            .find({
+              $and: [
+                { sanghamId: req.sanghamId },
+                { customerId: req.customerId },
+              ],
+            })
+            .sort({ createdAt: -1 });
+          // findDeposit.sort((a, b) => {
+          //   const dateA = new Date(a.date);
+          //   const dateB = new Date(b.date);
 
-            return dateB.getMonth() - dateA.getMonth();
-          });
+          //   return dateB.getMonth() - dateA.getMonth();
+          // });
           console.log('findDeposit', findDeposit);
           const findDepositDate = new Date(findDeposit[0].date);
-
+          console.log(findDepositDate);
+          console.log(currentDate);
+          console.log(
+            findDepositDate.getDate() === currentDate.getDate() &&
+              findDepositDate.getMonth() === currentDate.getMonth() &&
+              findDepositDate.getFullYear() === currentDate.getFullYear(),
+          );
           if (
             findDepositDate.getDate() === currentDate.getDate() &&
             findDepositDate.getMonth() === currentDate.getMonth() &&
@@ -945,7 +1074,21 @@ export class AdminService {
           );
           console.log('dateObject', dateObject);
           const currentDate = new Date();
-          const formattedDate = currentDate.toISOString().split('T')[0];
+          const monthDate = new Date();
+          monthDate.setDate(dateObject.getDate());
+          monthDate.setMonth(currentDate.getMonth());
+          monthDate.setFullYear(currentDate.getFullYear());
+          console.log('monthDate', monthDate);
+          console.log('currentDate', currentDate);
+          console.log("equalstatus",monthDate.getDate() === currentDate.getDate() &&
+          monthDate.getMonth() === currentDate.getMonth() &&
+          monthDate.getFullYear() === currentDate.getFullYear());
+          if (
+            monthDate.getDate() === currentDate.getDate() &&
+            monthDate.getMonth() === currentDate.getMonth() &&
+            monthDate.getFullYear() === currentDate.getFullYear()
+          ) {
+            const formattedDate = monthDate.toISOString().split('T')[0];
           const saveFormattedDate = new Date(formattedDate);
           const formattedSavingDate = format(
             saveFormattedDate,
@@ -965,12 +1108,13 @@ export class AdminService {
           aggregatedDeposits.get(
             deposit.sanghamId + formattedDate,
           ).depositAmount += deposit.depositAmount;
+          }
         }
       }
 
       // Create a single deposit record for each customer
       for (const depositRecord of aggregatedDeposits.values()) {
-        // console.log('depositRecord', depositRecord);
+        console.log('depositRecord', depositRecord);
         const existingDepositDetails = await this.depositdetailsModel.findOne({
           sanghamId: depositRecord.sanghamId,
           depositDate: depositRecord.date,
@@ -992,6 +1136,7 @@ export class AdminService {
             return dateB.getMonth() - dateA.getMonth();
           });
           const findDepositDate = new Date(findDeposit[0].date);
+          console.log('findDepositDate', findDepositDate);
           const formattedDate = currentDate.toISOString().split('T')[0];
           console.log('formattedDate', formattedDate);
           const saveFormattedDate = new Date(formattedDate);
@@ -1087,6 +1232,89 @@ export class AdminService {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           message: "Didn't found any deposits for this customer",
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async getSanghamDepositsbyfilter(req: depositDto) {
+    try {
+      const podupuList = await this.depositModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      if (podupuList.length > 0) {
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          { $match: { sanghamId: req.sanghamId } },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customer',
+            },
+          },
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
+            $match: {
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
+            },
+          } as any);
+        }
+
+        const paidList = await this.depositModel.aggregate(aggregationPipeline);
+        const count = await this.depositModel
+          .find({ sanghamId: req.sanghamId })
+          .count();
+
+        if (paidList.length > 0) {
+          if (!req.date) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'List of deposits',
+              count: count,
+              data: paidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Deposit List of Sangham',
+              count: count,
+              data: filteredpaidList,
+            };
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found deposit list',
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any deposits by this sangham',
         };
       }
     } catch (error) {
@@ -1313,6 +1541,91 @@ export class AdminService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: 'No Withdraws found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async getSanghamWithdrawsbyfilter(req: withdrawDto) {
+    try {
+      const podupuList = await this.withdrawModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      if (podupuList.length > 0) {
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          { $match: { sanghamId: req.sanghamId } },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customer',
+            },
+          },
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
+            $match: {
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
+            },
+          } as any);
+        }
+
+        const paidList = await this.withdrawModel.aggregate(
+          aggregationPipeline,
+        );
+        const count = await this.withdrawModel
+          .find({ sanghamId: req.sanghamId })
+          .count();
+
+        if (paidList.length > 0) {
+          if (!req.date) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'List of withdraws',
+              count: count,
+              data: paidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Withdraw List of Sangham',
+              count: count,
+              data: filteredpaidList,
+            };
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found withdraw list',
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any withdraws by this sangham',
         };
       }
     } catch (error) {

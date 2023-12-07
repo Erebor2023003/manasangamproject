@@ -184,6 +184,19 @@ export class AdminController {
     }
   }
 
+  @Post('/sanghampodhupubalance')
+  async sanghamPodhupubalance(@Body() req: podhupuDto) {
+    try{
+      const paidList = await this.adminService.getSanghamPodhupuBalance(req);
+      return paidList
+    }catch(error) {
+      return{
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/adddepositdetails')
   async addDepositDetails(@Body() req: depositDetailsDto) {
     try{
@@ -263,6 +276,19 @@ export class AdminController {
     }
   }
 
+  @Post('/customerdepositsfilter')
+  async sanghamDepositsFilter(@Body() req: depositDto) {
+    try{
+      const list = await this.adminService.getSanghamDepositsbyfilter(req);
+      return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/deposithistory')
   async depositHistory(@Body() req: depositDto) {
     try{
@@ -301,4 +327,17 @@ export class AdminController {
       }
     }
   } 
+
+  @Post('/customerwithdrawsfilter')
+  async sanghamWithdrawsFilter(@Body() req: withdrawDto) {
+    try{
+      const list = await this.adminService.getSanghamWithdrawsbyfilter(req);
+      return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

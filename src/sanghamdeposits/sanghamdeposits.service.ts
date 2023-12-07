@@ -6,6 +6,7 @@ import { SanghamDeposit } from './schema/sanghamdeposit.schema';
 import { SanghamWithdraw } from './schema/sanghamwithdraw.schema';
 import { sanghamdepositDetailsDto } from './dto/sanghamdepositdetails.dto';
 import { sanghamDepositDto } from './dto/sanghamdeposits.dto';
+import { sanghamWithdrawDto } from './dto/sanghamwithdraw.dto';
 
 @Injectable()
 export class SanghamdepositsService {
@@ -14,7 +15,7 @@ export class SanghamdepositsService {
     private readonly sanghamDepositDetailsModel: Model<SanghamDepositDetails>,
     @InjectModel(SanghamDeposit.name)
     private readonly sanghamDepositModel: Model<SanghamDeposit>,
-    @InjectModel(SanghamDepositDetails.name)
+    @InjectModel(SanghamWithdraw.name)
     private readonly sanghamWithdrawModel: Model<SanghamWithdraw>,
   ) {}
 
@@ -160,6 +161,7 @@ export class SanghamdepositsService {
           };
         }
         let depositInterest: number = 0;
+        let total = 0;
         const findDeposits = await this.sanghamDepositModel.find({
           sanghamId: req.sanghamId,
         });
@@ -189,8 +191,12 @@ export class SanghamdepositsService {
             depositInterest =
               findDeposits[0].interest +
               findDeposits[0].total * (findSanghamDetails.interestRate / 100);
+            total = findDeposits[0].total - findDeposits[0].interest;
           }
           console.log(depositInterest);
+        }
+        if (currentDate.getDate() != depositDate.getDate()) {
+          currentDate.setDate(depositDate.getDate());
         }
         const addDeposit = await this.sanghamDepositModel.create({
           sanghamId: req.sanghamId,
@@ -198,21 +204,17 @@ export class SanghamdepositsService {
           depositAmount: req.depositAmount,
           date: currentDate,
           interest: depositInterest,
-          total: depositInterest,
+          total: depositInterest + total,
         });
         if (addDeposit) {
           console.log('depositInterest', depositInterest);
           console.log('addDeposit.depositAmount', addDeposit.depositAmount);
-          console.log('findDeposits[0].total', findDeposits[0].total);
+          console.log('total', total);
           const updateTotal = await this.sanghamDepositModel.updateOne(
             { sanghamDepositId: addDeposit.sanghamDepositId },
             {
               $set: {
-                total:
-                  depositInterest +
-                  addDeposit.depositAmount +
-                  findDeposits[0].total -
-                  findDeposits[0].interest,
+                total: depositInterest + addDeposit.depositAmount + total,
               },
             },
           );
@@ -244,16 +246,6 @@ export class SanghamdepositsService {
       const findSanghamDeposits = await this.sanghamDepositModel.find({
         sanghamId: req.sanghamId,
       });
-      // const dateString = req.date;
-
-      // // console.log(dateString);
-      // const [day, month, year] = dateString.split('-');
-      // const numericYear = parseInt(year, 10);
-      // const numericMonth = parseInt(month, 10);
-
-      // const passedDate = new Date(
-      //   Date.UTC(numericYear, numericMonth - 1, +day),
-      // );
       const passedDate = new Date(req.date);
       console.log(passedDate);
       // Sorting the deposits by a custom logic
@@ -277,17 +269,17 @@ export class SanghamdepositsService {
         }
       });
 
-      if(findSanghamDeposits.length>0) {
+      if (findSanghamDeposits.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: "List of sangham deposits",
+          message: 'List of sangham deposits',
           data: findSanghamDeposits,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Sangham Deposits Not Found",
-        }
+          message: 'Sangham Deposits Not Found',
+        };
       }
     } catch (error) {
       return {
@@ -296,4 +288,90 @@ export class SanghamdepositsService {
       };
     }
   }
+
+  
+  // async createSanghamWithdraw(req: sanghamWithdrawDto) {
+  //   try {
+  //     const sanghamDeposit = await this.sanghamDepositDetailsModel.findOne({
+  //       sanghamId: req.sanghamId,
+  //     });
+  //     if (sanghamDeposit) {
+  //       const dateString = sanghamDeposit.depositDate;
+  //       const [day, month, year] = dateString.split('-');
+  //       const numericYear = parseInt(year, 10);
+  //       const numericMonth = parseInt(month, 10);
+
+  //       const depositDate = new Date(
+  //         Date.UTC(numericYear, numericMonth - 1, +day),
+  //       );
+  //       const currentDate = new Date();
+  //       const withdrawStartDate = new Date(depositDate);
+  //       withdrawStartDate.setMonth(currentDate.getMonth());
+  //       withdrawStartDate.setFullYear(currentDate.getFullYear());
+  //       console.log(withdrawStartDate);
+  //       const withdrawEndDate = new Date();
+  //       withdrawEndDate.setDate(withdrawStartDate.getDate() + 1);
+  //       withdrawEndDate.setMonth(currentDate.getMonth());
+  //       withdrawEndDate.setFullYear(currentDate.getFullYear());
+  //       console.log(withdrawEndDate);
+  //       if (
+  //         withdrawStartDate <= currentDate &&
+  //         currentDate <= withdrawEndDate
+  //       ) {
+  //         const findSanghamDeposits = await this.sanghamDepositModel.find({
+  //           sanghamId: req.sanghamId,
+  //         });
+  //         findSanghamDeposits.sort((a, b) => {
+  //           const dateA = new Date(a.date);
+  //           const dateB = new Date(b.date);
+  //           return dateB.getMonth() - dateA.getMonth();
+  //         });
+  //         if (
+  //           !req.withdrawAmount ||
+  //           req.withdrawAmount === 0 ||
+  //           req.withdrawAmount >= findSanghamDeposits[0].total
+  //         ) {
+  //           return {
+  //             statusCode: HttpStatus.BAD_REQUEST,
+  //             message: 'Please enter valid amount',
+  //           };
+  //         }
+  //         if (currentDate != depositDate) {
+  //           currentDate.setDate(depositDate.getDate());
+  //         }
+  //         console.log(req.withdrawAmount);
+  //         const addwithdraw = await this.sanghamWithdrawModel.create({
+  //           withdrawAmount: req.withdrawAmount,
+  //           date: currentDate,
+  //           agentId: sanghamDeposit.agentId,
+  //           sanghamId: req.sanghamId,
+  //           total: req.withdrawAmount,
+  //         });
+  //         if (addwithdraw) {
+
+  //            return {
+  //               statusCode: HttpStatus.OK,
+  //               message: "Withdraw Successful",
+  //               data: addwithdraw,
+  //             }
+  //         }
+  //       } else {
+  //         return {
+  //           statusCode: HttpStatus.BAD_REQUEST,
+  //           message: `Withdraw can only be done on ${withdrawStartDate} to ${withdrawEndDate}.`,
+  //         };
+  //       }
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.NOT_FOUND,
+  //         message: 'Sangham Not Found',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
 }

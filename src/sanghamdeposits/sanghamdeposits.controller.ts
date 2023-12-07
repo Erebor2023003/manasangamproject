@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, HttpStatus } from '@nestjs/common';
 import { SanghamdepositsService } from './sanghamdeposits.service';
 import { sanghamdepositDetailsDto } from './dto/sanghamdepositdetails.dto';
 import { sanghamDepositDto } from './dto/sanghamdeposits.dto';
+import { sanghamWithdrawDto } from './dto/sanghamwithdraw.dto';
 
 @Controller('sanghamdeposits')
 export class SanghamdepositsController {
@@ -83,4 +84,17 @@ export class SanghamdepositsController {
       }
     }
   }
+
+  // @Post('/withdrawsanghamdeposit')
+  // async withdrawSanghamDeposit(@Body() req: sanghamWithdrawDto) {
+  //   try{
+  //     const withdraw = await this.sanghamdepositsService.createSanghamWithdraw(req);
+  //     return withdraw 
+  //   } catch(error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     }
+  //   }
+  // }
 }

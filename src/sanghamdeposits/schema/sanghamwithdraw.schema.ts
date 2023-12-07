@@ -14,5 +14,7 @@ export class SanghamWithdraw extends Document{
     agentId: string
     @Prop()
     date: string
+    @Prop()
+    total: number
 }
 export const sanghamWithdrawSchema = SchemaFactory.createForClass(SanghamWithdraw);

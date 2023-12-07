@@ -11,4 +11,6 @@ export class sanghamWithdrawDto{
     agentId: string
     @ApiProperty()
     date: string
+    @ApiProperty()
+    total: number
 }
