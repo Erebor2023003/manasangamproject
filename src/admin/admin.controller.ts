@@ -91,21 +91,7 @@ export class AdminController {
         }
       }
   }
-
-    // @Cron('0 * * * * *')
-    @Post('/updatecustomerpodupus')
-    async updatePoshupus()  {
-        try{
-          const updatepodhupurecord = await this.adminService.updatePodupu();
-          return updatepodhupurecord
-        } catch(error) {
-          return {
-            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-            message: error,
-          }
-        }
-    }
-
+  
   @Post('/podupupaystatus')
   async podupustatus(@Body() req: podhupuDto) {
     try{

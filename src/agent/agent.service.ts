@@ -23,7 +23,8 @@ export class AgentService {
     @InjectModel(Podupu.name)
     private readonly podupuModel: Model<Podupu>,
     @InjectModel(Deposit.name) private readonly depositModel: Model<Deposit>,
-    @InjectModel(SanghamDeposit.name) private readonly sanghamDepositModel: Model<SanghamDeposit>,
+    @InjectModel(SanghamDeposit.name)
+    private readonly sanghamDepositModel: Model<SanghamDeposit>,
   ) {}
 
   private agentSanghamMap: Record<string, number> = {};
@@ -182,17 +183,121 @@ export class AgentService {
     }
   }
 
-  // async updateAgent(req: agentDto, image) {
-  //   try{
-  //     const findAgent = await this.agentModel.findOne({agentId: req.agentId});
-  //     return findAgent
-  //   } catch(error) {
-  //     return {
-  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-  //       message: error,
-  //     }
-  //   }
-  // }
+  async updateAgent(req: agentDto, image) {
+    try {
+      const findAgent = await this.agentModel.findOne({ agentId: req.agentId });
+      if (image) {
+        if (image.aadharImage && image.aadharImage[0]) {
+          const attachmentFile = await this.sharedService.saveFile(
+            image.aadharImage[0],
+          );
+          req.aadharImage = attachmentFile;
+        }
+        if (image.tenthmemo && image.tenthmemo[0]) {
+          const attachmentFile = await this.sharedService.saveFile(
+            image.tenthmemo[0],
+          );
+
+          req.tenthmemo = attachmentFile;
+        }
+        if (image.profilePicture && image.profilePicture[0]) {
+          const attachmentFile = await this.sharedService.saveFile(
+            image.profilePicture[0],
+          );
+
+          req.profilePicture = attachmentFile;
+        }
+      }
+      if (findAgent) {
+        if (req.tenthmemo || req.aadharImage || req.profilePicture) {
+          let password;
+          if(req.password) {
+            const bcryptPassword = await this.authService.hashPassword(
+              req.password,
+            );
+            req.password = bcryptPassword;
+          } else {
+            password = findAgent.password;
+          }
+          const updateAgent = await this.agentModel.updateOne(
+            { agentId: req.agentId },
+            {
+              $set: {
+                agentName: req.agentName,
+                mobileNo: req.mobileNo,
+                emailId: req.emailId,
+                aadharNo: req.aadharNo,
+                aadharImage: req.aadharImage,
+                tenthmemo: req.tenthmemo,
+                address: req.address,
+                password: password,
+                profilePicture: req.profilePicture,
+              },
+            },
+          );
+          if(updateAgent) {
+            const findAgent = await this.agentModel.findOne({agentId: req.agentId});
+            return {
+              statusCode: HttpStatus.OK,
+              message: "Agent Updated Succesfully",
+              data: findAgent,
+            }
+          } else {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Invalid Request",
+            }
+          }
+        } else {
+          let password;
+          if(req.password) {
+            const bcryptPassword = await this.authService.hashPassword(
+              req.password,
+            );
+            req.password = bcryptPassword;
+          } else {
+            password = findAgent.password;
+          }
+          const updateAgent = await this.agentModel.updateOne(
+            { agentId: req.agentId },
+            {
+              $set: {
+                agentName: req.agentName,
+                mobileNo: req.mobileNo,
+                emailId: req.emailId,
+                aadharNo: req.aadharNo,
+                address: req.address,
+                password: password,
+              },
+            },
+          );
+          if(updateAgent) {
+            const findAgent = await this.agentModel.findOne({agentId: req.agentId});
+            return {
+              statusCode: HttpStatus.OK,
+              message: "Agent Updated Succesfully",
+              data: findAgent,
+            }
+          } else {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Invalid Request",
+            }
+          }
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Agent Not Found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
 
   async createSangham(req: sanghamDto) {
     try {
@@ -379,7 +484,7 @@ export class AgentService {
   }
 
   async getSanghamAvailableBalance(req: sanghamDto) {
-    try{
+    try {
       const podupubalance = await this.podupuModel.find({
         $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }],
       });
@@ -404,30 +509,30 @@ export class AgentService {
           return acc + podhupuAmount + fine;
         }, 0);
       }
-        const sanghamdepositbalance = await this.sanghamDepositModel.find({
-          sanghamId: req.sanghamId,
-        });
-        let totalSanghamAmount = 0;
-        if(sanghamdepositbalance.length > 0) {
-          totalSanghamAmount = sanghamdepositbalance.reduce((acc, current) => {
-            const podhupuAmount = current.depositAmount || 0;
-            const fine = current.interest || 0;
-            return acc + podhupuAmount + fine;
-          }, 0);
-        }
-        console.log(totalpodupuAmount);
-        console.log(totalAmount);
-        console.log(totalSanghamAmount);
-        return {
-          statusCode: HttpStatus.OK,
-          message: "Available Balance of Sangham",
-          data: totalpodupuAmount + totalAmount + totalSanghamAmount
-        }
-    } catch(error) {
+      const sanghamdepositbalance = await this.sanghamDepositModel.find({
+        sanghamId: req.sanghamId,
+      });
+      let totalSanghamAmount = 0;
+      if (sanghamdepositbalance.length > 0) {
+        totalSanghamAmount = sanghamdepositbalance.reduce((acc, current) => {
+          const podhupuAmount = current.depositAmount || 0;
+          const fine = current.interest || 0;
+          return acc + podhupuAmount + fine;
+        }, 0);
+      }
+      console.log(totalpodupuAmount);
+      console.log(totalAmount);
+      console.log(totalSanghamAmount);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Available Balance of Sangham',
+        data: totalpodupuAmount + totalAmount + totalSanghamAmount,
+      };
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 }

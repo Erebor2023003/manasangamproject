@@ -73,21 +73,21 @@ export class AgentController {
     }
   }
 
-  // @Post('/updateAgent')
-  // @UseInterceptors(
-  //   FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
-  // )
-  // async updateAgent(@Body() req: agentDto, @UploadedFiles() image) {
-  //   try{
-  //     const moderate = await this.agentService.updateAgent(req, image);
-  //     return moderate
-  //   } catch(error) {
-  //     return {
-  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-  //       message: error,
-  //     }
-  //   }
-  // }
+  @Post('/updateAgent')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
+  )
+  async updateAgent(@Body() req: agentDto, @UploadedFiles() image) {
+    try{
+      const moderate = await this.agentService.updateAgent(req, image);
+      return moderate
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
