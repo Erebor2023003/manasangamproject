@@ -41,4 +41,17 @@ export class CustomerController {
       }
     }
   }
+
+  @Post('/searchcustomerbyname')
+  async searchCustomerByName(@Body() req: customerDto) {
+    try{
+      const searchCustomer = await this.customerService.searchCustomerByName(req);
+      return searchCustomer
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

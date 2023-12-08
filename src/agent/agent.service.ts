@@ -8,6 +8,9 @@ import { AuthService } from 'src/auth/auth.service';
 import { sanghamDto } from './dto/sangham.dto';
 import { Sangham } from './schema/sangham.schema';
 import { Customer } from 'src/customer/schema/customer.schema';
+import { Podupu } from 'src/admin/schema/podhupu.schema';
+import { Deposit } from 'src/admin/schema/deposit.schema';
+import { SanghamDeposit } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
 
 @Injectable()
 export class AgentService {
@@ -17,6 +20,10 @@ export class AgentService {
     @InjectModel(Customer.name) private readonly customerModel: Model<Customer>,
     private readonly sharedService: SharedService,
     private readonly authService: AuthService,
+    @InjectModel(Podupu.name)
+    private readonly podupuModel: Model<Podupu>,
+    @InjectModel(Deposit.name) private readonly depositModel: Model<Deposit>,
+    @InjectModel(SanghamDeposit.name) private readonly sanghamDepositModel: Model<SanghamDeposit>,
   ) {}
 
   private agentSanghamMap: Record<string, number> = {};
@@ -175,6 +182,18 @@ export class AgentService {
     }
   }
 
+  // async updateAgent(req: agentDto, image) {
+  //   try{
+  //     const findAgent = await this.agentModel.findOne({agentId: req.agentId});
+  //     return findAgent
+  //   } catch(error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     }
+  //   }
+  // }
+
   async createSangham(req: sanghamDto) {
     try {
       if (!this.agentSanghamMap[req.agentId]) {
@@ -243,11 +262,11 @@ export class AgentService {
             },
             {
               $addFields: {
-                customerCount: { $size: "$customers" },
+                customerCount: { $size: '$customers' },
               },
             },
             {
-              $unwind: '$customerCount'
+              $unwind: '$customerCount',
             },
             {
               $addFields: {
@@ -257,7 +276,7 @@ export class AgentService {
                     100,
                   ],
                 },
-              }
+              },
             },
             {
               $project: {
@@ -265,7 +284,7 @@ export class AgentService {
               },
             },
           ]);
-          
+
           return {
             statusCode: HttpStatus.OK,
             message: 'Sanghams of an Agent',
@@ -328,6 +347,87 @@ export class AgentService {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  async searchBySanghamname(req: sanghamDto) {
+    try {
+      const searchItem = await this.sanghamModel.find({
+        $and: [
+          { agentId: req.agentId },
+          { sanghamName: { $regex: new RegExp(req.sanghamName, 'i') } },
+        ],
+      });
+      if (searchItem.length > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Searched Sanghams',
+          data: searchItem,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'No sanghams found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async getSanghamAvailableBalance(req: sanghamDto) {
+    try{
+      const podupubalance = await this.podupuModel.find({
+        $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }],
+      });
+      let totalpodupuAmount = 0;
+      if (podupubalance.length > 0) {
+        // Use reduce to sum up podhupuAmount and fine
+        totalpodupuAmount = podupubalance.reduce((acc, current) => {
+          const podhupuAmount = current.podhupuAmount || 0;
+          const fine = current.fine || 0;
+          return acc + podhupuAmount + fine;
+        }, 0);
+      }
+      const balance = await this.depositModel.find({
+        sanghamId: req.sanghamId,
+      });
+      let totalAmount = 0;
+      if (balance.length > 0) {
+        // Use reduce to sum up podhupuAmount and fine
+        totalAmount = balance.reduce((acc, current) => {
+          const podhupuAmount = current.depositAmount || 0;
+          const fine = current.interest || 0;
+          return acc + podhupuAmount + fine;
+        }, 0);
+      }
+        const sanghamdepositbalance = await this.sanghamDepositModel.find({
+          sanghamId: req.sanghamId,
+        });
+        let totalSanghamAmount = 0;
+        if(sanghamdepositbalance.length > 0) {
+          totalSanghamAmount = sanghamdepositbalance.reduce((acc, current) => {
+            const podhupuAmount = current.depositAmount || 0;
+            const fine = current.interest || 0;
+            return acc + podhupuAmount + fine;
+          }, 0);
+        }
+        console.log(totalpodupuAmount);
+        console.log(totalAmount);
+        console.log(totalSanghamAmount);
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Available Balance of Sangham",
+          data: totalpodupuAmount + totalAmount + totalSanghamAmount
+        }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
     }
   }
 }

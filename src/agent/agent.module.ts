@@ -10,6 +10,9 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { JwtService } from '@nestjs/jwt';
 import { Sangham, sanghamSchema } from './schema/sangham.schema';
 import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
+import { Podupu, podupuSchema } from 'src/admin/schema/podhupu.schema';
+import { Deposit, depositSchema } from 'src/admin/schema/deposit.schema';
+import { SanghamDeposit, sanghamDepositSchema } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
       { name: Agent.name, schema: agentSchema },
       { name: Sangham.name, schema: sanghamSchema },
       { name: Customer.name, schema: customerSchema },
+      { name: Podupu.name, schema: podupuSchema },
+      { name: Deposit.name, schema: depositSchema },
+      { name: SanghamDeposit.name, schema: sanghamDepositSchema },
     ]),
   ],
   controllers: [AgentController],

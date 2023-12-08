@@ -24,20 +24,20 @@ export class CustomerService {
         };
       } else {
         if (image) {
-            if (image.aadharImage && image.aadharImage[0]) {
-              const attachmentFile = await this.sharedService.saveFile(
-                image.aadharImage[0],
-              );
-              req.aadharImage = attachmentFile;
-            }
-            if (image.profileImage && image.profileImage[0]) {
-              const attachmentFile = await this.sharedService.saveFile(
-                image.profileImage[0],
-              );
-  
-              req.profileImage = attachmentFile;
-            }
+          if (image.aadharImage && image.aadharImage[0]) {
+            const attachmentFile = await this.sharedService.saveFile(
+              image.aadharImage[0],
+            );
+            req.aadharImage = attachmentFile;
           }
+          if (image.profileImage && image.profileImage[0]) {
+            const attachmentFile = await this.sharedService.saveFile(
+              image.profileImage[0],
+            );
+
+            req.profileImage = attachmentFile;
+          }
+        }
         const addcustomer = await this.customerModel.create(req);
         if (addcustomer) {
           return {
@@ -61,38 +61,68 @@ export class CustomerService {
   }
 
   async listOfCustomersBySangam(req: customerDto) {
-    try{
-      const list = await this.customerModel.find({sanghamId: req.sanghamId});
-      if(list.length>0) {
+    try {
+      const list = await this.customerModel.find({ sanghamId: req.sanghamId });
+      if (list.length > 0) {
         const listbysangham = await this.customerModel.aggregate([
-          {$match: {sanghamId: req.sanghamId}},
+          { $match: { sanghamId: req.sanghamId } },
           {
             $lookup: {
-              from: "sanghams",
-              localField: "sanghamId",
-              foreignField: "sanghamId",
-              as: "sanghamId",
-            }
-          }
+              from: 'sanghams',
+              localField: 'sanghamId',
+              foreignField: 'sanghamId',
+              as: 'sanghamId',
+            },
+          },
         ]);
-        const count = await this.customerModel.find({sanghamId: req.sanghamId}).count();
+        const count = await this.customerModel
+          .find({ sanghamId: req.sanghamId })
+          .count();
         return {
           statusCode: HttpStatus.OK,
-          message: "List of customers of sangham",
+          message: 'List of customers of sangham',
           count: count,
           data: listbysangham,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'No customers are Available',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async searchCustomerByName(req: customerDto) {
+    try {
+      const searchCustomer = await this.customerModel.find({
+        $and: [
+          { sanghamId: req.sanghamId },
+          { firstName: { $regex: new RegExp(req.firstName, 'i') } },
+        ],
+      });
+      if(searchCustomer.length>0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Results of searched customer",
+          data: searchCustomer
         }
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "No customers are Available",
+          message: "No customers Available by the searched name",
         }
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 }

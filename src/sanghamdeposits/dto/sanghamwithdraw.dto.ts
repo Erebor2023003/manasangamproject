@@ -13,4 +13,6 @@ export class sanghamWithdrawDto{
     date: string
     @ApiProperty()
     total: number
+    @ApiProperty()
+    customerName: string
 }

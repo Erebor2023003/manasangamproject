@@ -25,6 +25,7 @@ import { Deposit } from './schema/deposit.schema';
 import { depositDto } from './dto/deposit.dto';
 import { withdrawDto } from './dto/withdraw.dto';
 import { Withdraw } from './schema/withdraw.schema';
+import { SanghamDeposit } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
 
 @Injectable()
 export class AdminService {
@@ -43,6 +44,8 @@ export class AdminService {
     @InjectModel(Withdraw.name)
     private readonly withdrawModel: Model<Withdraw>,
     private readonly authService: AuthService,
+    @InjectModel(SanghamDeposit.name)
+    private readonly sanghamDepositModel: Model<SanghamDeposit>,
   ) {}
 
   async adminregister(req: adminDto) {
@@ -917,62 +920,26 @@ export class AdminService {
         Date.UTC(numericYear, numericMonth - 1, +day),
       );
       console.log(depositDate);
-      const findDepositsOfcustomer = await this.depositModel.find({
-        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-      });
-      if (findDepositsOfcustomer.length === 0) {
-        if (depositDate.getDate() === currentDate.getDate()) {
-          const saveFormattedDate = new Date(currentDate);
-          const formattedSavingDate = format(
-            saveFormattedDate,
-            "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
-          );
-          const createDeposit = await this.depositModel.create({
-            sanghamId: req.sanghamId,
-            customerId: req.customerId,
-            depositAmount: req.depositAmount,
-            date: formattedSavingDate,
-            interest: 0,
-            withdraw: 0,
-            total: req.depositAmount,
-          });
-          return {
-            statusCode: HttpStatus.OK,
-            message: 'Deposit Paid successfully',
-            data: createDeposit,
-          };
-        } else {
-          return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: `Deposit for the first time can be paid only on ${findSangham.depositDate}.`,
-          };
-        }
-      } else {
-        const oneDayLaterTimestamp =
-          depositDate.getTime() + 24 * 60 * 60 * 1000;
-        const extraDepositDate = new Date(oneDayLaterTimestamp);
-        const currentDay = currentDate.getDate();
-        const depositDay = depositDate.getDate();
-        const extraDepositDay = extraDepositDate.getDate();
-
-        console.log(currentDay);
-        console.log(depositDay);
-        console.log(extraDepositDay);
-
-        console.log(currentDay === depositDay);
-        console.log(currentDay === extraDepositDay);
-
-        if (currentDay != depositDay && currentDay != extraDepositDay) {
-          return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message:
-              'Deposit can only be paid on the ' +
-              `${depositDate.getDate()} ` +
-              'or' +
-              ` ${extraDepositDay}` +
-              ' of every month.',
-          };
-        } else {
+      const depositStartDate = new Date();
+      depositStartDate.setDate(depositDate.getDate());
+      depositStartDate.setMonth(currentDate.getMonth());
+      depositStartDate.setFullYear(currentDate.getFullYear());
+      const depositEndDate = new Date();
+      depositEndDate.setDate(depositStartDate.getDate() + 1);
+      depositEndDate.setMonth(depositStartDate.getMonth());
+      depositEndDate.setFullYear(depositStartDate.getFullYear());
+      if (
+        (currentDate.getDate() === depositStartDate.getDate() ||
+          depositEndDate.getDate()) &&
+        (currentDate.getMonth() === depositStartDate.getMonth() ||
+          depositEndDate.getMonth()) &&
+        (currentDate.getFullYear() === depositStartDate.getFullYear() ||
+          depositEndDate.getFullYear())
+      ) {
+        const findDepositsOfcustomer = await this.depositModel.find({
+          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+        });
+        if (findDepositsOfcustomer.length > 0) {
           const findDeposit = await this.depositModel
             .find({
               $and: [
@@ -981,12 +948,6 @@ export class AdminService {
               ],
             })
             .sort({ createdAt: -1 });
-          // findDeposit.sort((a, b) => {
-          //   const dateA = new Date(a.date);
-          //   const dateB = new Date(b.date);
-
-          //   return dateB.getMonth() - dateA.getMonth();
-          // });
           console.log('findDeposit', findDeposit);
           const findDepositDate = new Date(findDeposit[0].date);
           console.log(findDepositDate);
@@ -996,10 +957,11 @@ export class AdminService {
               findDepositDate.getMonth() === currentDate.getMonth() &&
               findDepositDate.getFullYear() === currentDate.getFullYear(),
           );
+          console.log();
           if (
-            findDepositDate.getDate() === currentDate.getDate() &&
-            findDepositDate.getMonth() === currentDate.getMonth() &&
-            findDepositDate.getFullYear() === currentDate.getFullYear()
+            findDepositDate.getDate() === depositStartDate.getDate() &&
+            findDepositDate.getMonth() === depositStartDate.getMonth() &&
+            findDepositDate.getFullYear() === depositStartDate.getFullYear()
           ) {
             if (findDeposit[0].depositAmount != 0) {
               return {
@@ -1012,7 +974,6 @@ export class AdminService {
                 {
                   $set: {
                     depositAmount: req.depositAmount,
-                    date: currentDate,
                     total: req.depositAmount + findDeposit[0].total,
                   },
                 },
@@ -1039,7 +1000,39 @@ export class AdminService {
               message: 'Invalid Request',
             };
           }
+        } else {
+          if (depositDate.getDate() === currentDate.getDate()) {
+                const saveFormattedDate = new Date(currentDate);
+                const formattedSavingDate = format(
+                  saveFormattedDate,
+                  "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
+                );
+                const createDeposit = await this.depositModel.create({
+                  sanghamId: req.sanghamId,
+                  customerId: req.customerId,
+                  depositAmount: req.depositAmount,
+                  date: formattedSavingDate,
+                  interest: 0,
+                  withdraw: 0,
+                  total: req.depositAmount,
+                });
+                return {
+                  statusCode: HttpStatus.OK,
+                  message: 'Deposit Paid successfully',
+                  data: createDeposit,
+                };
+              } else {
+                return {
+                  statusCode: HttpStatus.BAD_REQUEST,
+                  message: `Deposit for the first time can be paid only on ${findSangham.depositDate}.`,
+                };
+              }
         }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: `Deposit can only be paid on ${depositStartDate.toLocaleDateString()} to ${depositEndDate.toLocaleDateString()}.`,
+        };
       }
     } catch (error) {
       return {
@@ -1080,34 +1073,37 @@ export class AdminService {
           monthDate.setFullYear(currentDate.getFullYear());
           console.log('monthDate', monthDate);
           console.log('currentDate', currentDate);
-          console.log("equalstatus",monthDate.getDate() === currentDate.getDate() &&
-          monthDate.getMonth() === currentDate.getMonth() &&
-          monthDate.getFullYear() === currentDate.getFullYear());
+          console.log(
+            'equalstatus',
+            monthDate.getDate() === currentDate.getDate() &&
+              monthDate.getMonth() === currentDate.getMonth() &&
+              monthDate.getFullYear() === currentDate.getFullYear(),
+          );
           if (
             monthDate.getDate() === currentDate.getDate() &&
             monthDate.getMonth() === currentDate.getMonth() &&
             monthDate.getFullYear() === currentDate.getFullYear()
           ) {
             const formattedDate = monthDate.toISOString().split('T')[0];
-          const saveFormattedDate = new Date(formattedDate);
-          const formattedSavingDate = format(
-            saveFormattedDate,
-            "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
-          );
-          console.log('formattedSavingDate', formattedSavingDate);
-          if (!aggregatedDeposits.has(deposit.sanghamId + formattedDate)) {
-            aggregatedDeposits.set(deposit.sanghamId + formattedDate, {
-              sanghamId: deposit.sanghamId,
-              customerId: deposit.customerId,
-              date: formattedSavingDate,
-              depositAmount: 0,
-            });
-          }
+            const saveFormattedDate = new Date(formattedDate);
+            const formattedSavingDate = format(
+              saveFormattedDate,
+              "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
+            );
+            console.log('formattedSavingDate', formattedSavingDate);
+            if (!aggregatedDeposits.has(deposit.sanghamId + formattedDate)) {
+              aggregatedDeposits.set(deposit.sanghamId + formattedDate, {
+                sanghamId: deposit.sanghamId,
+                customerId: deposit.customerId,
+                date: formattedSavingDate,
+                depositAmount: 0,
+              });
+            }
 
-          // Update the depositAmount for the current sanghamId and formattedDate
-          aggregatedDeposits.get(
-            deposit.sanghamId + formattedDate,
-          ).depositAmount += deposit.depositAmount;
+            // Update the depositAmount for the current sanghamId and formattedDate
+            aggregatedDeposits.get(
+              deposit.sanghamId + formattedDate,
+            ).depositAmount += deposit.depositAmount;
           }
         }
       }
@@ -1344,6 +1340,52 @@ export class AdminService {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           message: "Can't found deposits",
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async depositsWholeBalance(req: depositDto) {
+    try {
+      const balance = await this.depositModel.find({
+        sanghamId: req.sanghamId,
+      });
+      if (balance.length > 0) {
+        // Use reduce to sum up podhupuAmount and fine
+        const totalAmount = balance.reduce((acc, current) => {
+          const podhupuAmount = current.depositAmount || 0;
+          const fine = current.interest || 0;
+          return acc + podhupuAmount + fine;
+        }, 0);
+        const sanghamdepositbalance = await this.sanghamDepositModel.find({
+          sanghamId: req.sanghamId,
+        });
+        let totalSanghamAmount;
+        if(sanghamdepositbalance.length > 0) {
+          totalSanghamAmount = sanghamdepositbalance.reduce((acc, current) => {
+            const podhupuAmount = current.depositAmount || 0;
+            const fine = current.interest || 0;
+            return acc + podhupuAmount + fine;
+          }, 0);
+        } else {
+          totalSanghamAmount = 0;
+        }
+        console.log(totalAmount);
+        console.log(totalSanghamAmount);
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Whole Deposit Balance of Sangham',
+          data: totalAmount + totalSanghamAmount,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Sangham Deposits Not Found',
         };
       }
     } catch (error) {
@@ -1633,6 +1675,29 @@ export class AdminService {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  async getWithdrawById(req: withdrawDto) {
+    try{
+      const findWithdraw = await this.withdrawModel.findOne({withdrawId: req.withdrawId});
+      if(findWithdraw) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Withdraw Details",
+          data: findWithdraw,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Withdraw Not Found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
     }
   }
 }

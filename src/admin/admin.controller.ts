@@ -302,6 +302,19 @@ export class AdminController {
     }
   }
 
+  @Post('/depositwholebalance')
+  async depositWholeBalance(@Body() req: depositDto) {
+    try{
+      const history = await this.adminService.depositsWholeBalance(req);
+      return history
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/withdrawdeposit')
   async depositWithdraw(@Body() req: withdrawDto) {
     try{
@@ -333,6 +346,19 @@ export class AdminController {
     try{
       const list = await this.adminService.getSanghamWithdrawsbyfilter(req);
       return list
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/getwithdrawbyid')
+  async getWithdrawById(@Body() req: withdrawDto) {
+    try{
+      const findWithdraw = await this.adminService.getWithdrawById(req);
+      return findWithdraw
     } catch(error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

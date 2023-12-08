@@ -73,6 +73,22 @@ export class AgentController {
     }
   }
 
+  // @Post('/updateAgent')
+  // @UseInterceptors(
+  //   FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
+  // )
+  // async updateAgent(@Body() req: agentDto, @UploadedFiles() image) {
+  //   try{
+  //     const moderate = await this.agentService.updateAgent(req, image);
+  //     return moderate
+  //   } catch(error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     }
+  //   }
+  // }
+
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('/addsangham')
@@ -108,6 +124,32 @@ export class AgentController {
     try{
       const getDetails = await this.agentService.getSanghamDetails(req);
       return getDetails
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/searchsanghambyname')
+  async searchSanghamByName(@Body() req: sanghamDto) {
+    try{
+      const searchItem = await this.agentService.searchBySanghamname(req);
+      return searchItem
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/viewsanghambalance')
+  async viewSanghamBalance(@Body() req: sanghamDto) {
+    try{
+      const balance = await this.agentService.getSanghamAvailableBalance(req);
+      return balance
     } catch(error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

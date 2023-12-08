@@ -85,16 +85,42 @@ export class SanghamdepositsController {
     }
   }
 
-  // @Post('/withdrawsanghamdeposit')
-  // async withdrawSanghamDeposit(@Body() req: sanghamWithdrawDto) {
-  //   try{
-  //     const withdraw = await this.sanghamdepositsService.createSanghamWithdraw(req);
-  //     return withdraw 
-  //   } catch(error) {
-  //     return {
-  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-  //       message: error,
-  //     }
-  //   }
-  // }
+  @Post('/getsanghamdepositsbalance')
+  async getSanghamDepositsBalance(@Body() req: sanghamDepositDto) {
+    try{
+      const addDeposit = await this.sanghamdepositsService.sanghamDepositsBalance(req);
+      return addDeposit
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/withdrawsanghamdeposit')
+  async withdrawSanghamDeposit(@Body() req: sanghamWithdrawDto) {
+    try{
+      const withdraw = await this.sanghamdepositsService.createSanghamWithdraw(req);
+      return withdraw 
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/getsanghamwithdraws')
+  async getSanghamWithdrawList(@Body() req: sanghamWithdrawDto) {
+    try{
+      const withdraw = await this.sanghamdepositsService.getSanghamWithdrawsbyfilter(req);
+      return withdraw 
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }
