@@ -863,6 +863,8 @@ export class AdminService {
       depositEndDate.setDate(depositStartDate.getDate() + 1);
       depositEndDate.setMonth(depositStartDate.getMonth());
       depositEndDate.setFullYear(depositStartDate.getFullYear());
+      console.log("depositStartDate",depositStartDate);
+      console.log("depositEndDate",depositEndDate);
       if (
         (currentDate.getDate() === depositStartDate.getDate() ||
           depositEndDate.getDate()) &&
@@ -884,7 +886,8 @@ export class AdminService {
             })
             .sort({ createdAt: -1 });
           console.log('findDeposit', findDeposit);
-          const findDepositDate = new Date(findDeposit[0].date);
+          const dateString = findDeposit[0].date.replace(/GMTZ \(GMT[+-]\d{2}:\d{2}\)/, '');
+          const findDepositDate = new Date(dateString);
           console.log(findDepositDate);
           console.log(currentDate);
           console.log(
@@ -892,7 +895,7 @@ export class AdminService {
               findDepositDate.getMonth() === currentDate.getMonth() &&
               findDepositDate.getFullYear() === currentDate.getFullYear(),
           );
-          console.log();
+          // console.log();
           if (
             findDepositDate.getDate() === depositStartDate.getDate() &&
             findDepositDate.getMonth() === depositStartDate.getMonth() &&
@@ -1338,13 +1341,13 @@ export class AdminService {
       });
       const findDeposits = await this.depositModel.find({
         $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-      });
-      findDeposits.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
+      }).sort({createdAt: -1});
+      // findDeposits.sort((a, b) => {
+      //   const dateA = new Date(a.date);
+      //   const dateB = new Date(b.date);
 
-        return dateB.getMonth() - dateA.getMonth();
-      });
+      //   return dateB.getMonth() - dateA.getMonth();
+      // });
       const dateString = findsanghamDeposit.depositDate;
       const [day, month, year] = dateString.split('-');
       const numericYear = parseInt(year, 10);
