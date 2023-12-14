@@ -38,7 +38,19 @@ export class CustomerService {
             req.profileImage = attachmentFile;
           }
         }
-        const addcustomer = await this.customerModel.create(req);
+        const rawFingerprintData = req.fingerPrint;
+        const base64EncodedFingerprintData = Buffer.from(rawFingerprintData).toString('base64');
+        const addcustomer = await this.customerModel.create({
+          firstName: req.firstName,
+          aadharNo: req.aadharNo,
+          aadharImage: req.aadharImage,
+          mobileNo: req.mobileNo,
+          sanghamId: req.sanghamId,
+          profileImage: req.profileImage,
+          address: req.address,
+          fingerPrint: base64EncodedFingerprintData,
+          otp: 0
+        });
         if (addcustomer) {
           return {
             statusCode: HttpStatus.OK,
@@ -106,17 +118,17 @@ export class CustomerService {
           { firstName: { $regex: new RegExp(req.firstName, 'i') } },
         ],
       });
-      if(searchCustomer.length>0) {
+      if (searchCustomer.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: "Results of searched customer",
-          data: searchCustomer
-        }
+          message: 'Results of searched customer',
+          data: searchCustomer,
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "No customers Available by the searched name",
-        }
+          message: 'No customers Available by the searched name',
+        };
       }
     } catch (error) {
       return {

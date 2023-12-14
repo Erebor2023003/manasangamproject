@@ -8,16 +8,7 @@ import { podupuDetailsDto } from './dto/podhupuDetails.dto';
 import { PodupuDetails } from './schema/podhupuDetails.schema';
 import { podhupuDto } from './dto/podhupu.dto';
 import { Podupu } from './schema/podhupu.schema';
-import {
-  format,
-  parse,
-  differenceInDays,
-  subMonths,
-  addMonths,
-  getDate,
-  addDays,
-  setDate,
-} from 'date-fns';
+import { format } from 'date-fns';
 import { Customer } from 'src/customer/schema/customer.schema';
 import { depositDetailsDto } from './dto/depositDetails.dto';
 import { DepositDetails } from './schema/depositDetails.schema';
@@ -274,9 +265,15 @@ export class AdminService {
             } else {
               totalInterest = 0;
             }
-            if(lastMonthRecords[0].status === 'unpaid') {
-              fine = lastMonthRecords[0].podhupuAmount *(findPodhuDetails.fine / 100);
-              Total = findPodhuDetails.monthlyAmount + fine + totalInterest + lastMonthRecords[0].podhupuAmount
+            if (lastMonthRecords[0].status === 'unpaid') {
+              fine =
+                lastMonthRecords[0].podhupuAmount *
+                (findPodhuDetails.fine / 100);
+              Total =
+                findPodhuDetails.monthlyAmount +
+                fine +
+                totalInterest +
+                lastMonthRecords[0].podhupuAmount;
             } else {
               fine = 0;
               Total = findPodhuDetails.monthlyAmount + totalInterest;
@@ -291,7 +288,7 @@ export class AdminService {
               Total,
               status: 'unpaid',
             });
-            return createPodhupuRecord
+            return createPodhupuRecord;
           } else {
             const createPodhupuRecord = await this.podupuModel.create({
               sanghamId: customerRecord.sanghamId,
@@ -304,11 +301,10 @@ export class AdminService {
               status: 'unpaid',
             });
 
-            return createPodhupuRecord
+            return createPodhupuRecord;
           }
-
         } else {
-          return `records can't be created`
+          return `records can't be created`;
         }
       }
     } catch (error) {
@@ -459,6 +455,29 @@ export class AdminService {
     }
   }
 
+  async getPodhupuById(req: podhupuDto) {
+    try{
+      const details = await this.podupuModel.findOne({podhuId: req.podhuId});
+      if(details) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Details of Podhupu",
+          data: details,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Details of podhupu not found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   async customerPodupuBalance(req: podhupuDto) {
     try {
       const findCustomer = await this.podupuModel.find({
@@ -484,37 +503,55 @@ export class AdminService {
 
   async searchCustomerPodhupudByDate(req: podhupuDto) {
     try {
-      const parsedDate = new Date(req.date);
-      // if (parsedDate.getDate() === 1) {
-      //   parsedDate.setDate(parsedDate.getDate() + 1);
-      //   parsedDate.setMonth(parsedDate.getMonth());
-      //   parsedDate.setFullYear(parsedDate.getFullYear());
-      // }
-      console.log(parsedDate);
-      const searchlist = await this.podupuModel.find({
-        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-      });
-      const searchlistfilter = searchlist.filter((record) => {
-        const parsedRecordDate = new Date(record.date);
-        if (
-          parsedRecordDate.getDate() === parsedDate.getDate() &&
-          parsedRecordDate.getMonth() === parsedDate.getMonth() &&
-          parsedRecordDate.getFullYear() === parsedDate.getFullYear()
-        ) {
-          return record;
+      if (req.date) {
+        const parsedDate = new Date(req.date);
+        // if (parsedDate.getDate() === 1) {
+        //   parsedDate.setDate(parsedDate.getDate() + 1);
+        //   parsedDate.setMonth(parsedDate.getMonth());
+        //   parsedDate.setFullYear(parsedDate.getFullYear());
+        // }
+        console.log(parsedDate);
+        const searchlist = await this.podupuModel.find({
+          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+        });
+        const searchlistfilter = searchlist.filter((record) => {
+          const parsedRecordDate = new Date(record.date);
+          if (
+            parsedRecordDate.getDate() === parsedDate.getDate() &&
+            parsedRecordDate.getMonth() === parsedDate.getMonth() &&
+            parsedRecordDate.getFullYear() === parsedDate.getFullYear()
+          ) {
+            return record;
+          }
+        });
+        if (searchlistfilter.length > 0) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'Customer Podupu by date',
+            data: searchlistfilter,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Customer Podupu not found on that date',
+          };
         }
-      });
-      if (searchlistfilter.length > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'Customer Podupu by date',
-          data: searchlistfilter,
-        };
       } else {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'Customer Podupu not found on that date',
-        };
+        const searchlist = await this.podupuModel.find({
+          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+        });
+        if (searchlist.length > 0) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of Podhupu Records',
+            data: searchlist,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not Found podhupu records of this customer',
+          };
+        }
       }
     } catch (error) {
       return {
@@ -863,8 +900,8 @@ export class AdminService {
       depositEndDate.setDate(depositStartDate.getDate() + 1);
       depositEndDate.setMonth(depositStartDate.getMonth());
       depositEndDate.setFullYear(depositStartDate.getFullYear());
-      console.log("depositStartDate",depositStartDate);
-      console.log("depositEndDate",depositEndDate);
+      console.log('depositStartDate', depositStartDate);
+      console.log('depositEndDate', depositEndDate);
       if (
         (currentDate.getDate() === depositStartDate.getDate() ||
           depositEndDate.getDate()) &&
@@ -886,61 +923,87 @@ export class AdminService {
             })
             .sort({ createdAt: -1 });
           console.log('findDeposit', findDeposit);
-          const dateString = findDeposit[0].date.replace(/GMTZ \(GMT[+-]\d{2}:\d{2}\)/, '');
-          const findDepositDate = new Date(dateString);
-          console.log(findDepositDate);
-          console.log(currentDate);
-          console.log(
-            findDepositDate.getDate() === currentDate.getDate() &&
-              findDepositDate.getMonth() === currentDate.getMonth() &&
-              findDepositDate.getFullYear() === currentDate.getFullYear(),
-          );
-          // console.log();
-          if (
-            findDepositDate.getDate() === depositStartDate.getDate() &&
-            findDepositDate.getMonth() === depositStartDate.getMonth() &&
-            findDepositDate.getFullYear() === depositStartDate.getFullYear()
-          ) {
-            if (findDeposit[0].depositAmount != 0) {
-              return {
-                statusCode: HttpStatus.BAD_REQUEST,
-                message: 'Deposit has been paid on this day',
-              };
-            } else {
-              const updateDepositRecord = await this.depositModel.updateOne(
-                { depositId: findDeposit[0].depositId },
-                {
-                  $set: {
-                    depositAmount: req.depositAmount,
-                    total: req.depositAmount + findDeposit[0].total,
-                  },
-                },
-              );
-              if (updateDepositRecord) {
-                const getDepositRecord = await this.depositModel.findOne({
-                  depositId: findDeposit[0].depositId,
-                });
-                return {
-                  statusCode: HttpStatus.OK,
-                  message: 'Deposit Paid Successfully',
-                  data: getDepositRecord,
-                };
-              } else {
+          if (findDeposit[0].total != 0) {
+            const dateString = findDeposit[0].date.replace(
+              /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+              '',
+            );
+            const findDepositDate = new Date(dateString);
+            console.log(findDepositDate);
+            console.log(currentDate);
+            console.log(
+              findDepositDate.getDate() === currentDate.getDate() &&
+                findDepositDate.getMonth() === currentDate.getMonth() &&
+                findDepositDate.getFullYear() === currentDate.getFullYear(),
+            );
+            // console.log();
+            if (
+              findDepositDate.getDate() === depositStartDate.getDate() &&
+              findDepositDate.getMonth() === depositStartDate.getMonth() &&
+              findDepositDate.getFullYear() === depositStartDate.getFullYear()
+            ) {
+              if (findDeposit[0].depositAmount != 0) {
                 return {
                   statusCode: HttpStatus.BAD_REQUEST,
-                  message: 'Deposit Not Paid Successfully',
+                  message: 'Deposit has been paid on this day',
                 };
+              } else {
+                const updateDepositRecord = await this.depositModel.updateOne(
+                  { depositId: findDeposit[0].depositId },
+                  {
+                    $set: {
+                      depositAmount: req.depositAmount,
+                      total: req.depositAmount + findDeposit[0].total,
+                    },
+                  },
+                );
+                if (updateDepositRecord) {
+                  const getDepositRecord = await this.depositModel.findOne({
+                    depositId: findDeposit[0].depositId,
+                  });
+                  return {
+                    statusCode: HttpStatus.OK,
+                    message: 'Deposit Paid Successfully',
+                    data: getDepositRecord,
+                  };
+                } else {
+                  return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: 'Deposit Not Paid Successfully',
+                  };
+                }
               }
+            } else {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Invalid Request',
+              };
             }
           } else {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Invalid Request',
-            };
+              const formattedSavingDate = format(
+                depositStartDate,
+                "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
+              );
+              const createDeposit = await this.depositModel.create({
+                sanghamId: req.sanghamId,
+                customerId: req.customerId,
+                depositAmount: req.depositAmount,
+                date: formattedSavingDate,
+                interest: 0,
+                withdraw: 0,
+                total: req.depositAmount,
+              });
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Deposit Paid successfully',
+                data: createDeposit,
+              };
           }
         } else {
-          if (depositDate.getDate() === currentDate.getDate()) {
-            const saveFormattedDate = new Date(currentDate);
+            const saveFormattedDate = new Date();
+            saveFormattedDate.setDate(depositDate.getDate());
+            saveFormattedDate.setMonth(currentDate.getMonth());
+            saveFormattedDate.setFullYear(currentDate.getFullYear());
             const formattedSavingDate = format(
               saveFormattedDate,
               "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
@@ -959,12 +1022,6 @@ export class AdminService {
               message: 'Deposit Paid successfully',
               data: createDeposit,
             };
-          } else {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: `Deposit for the first time can be paid only on ${findSangham.depositDate}.`,
-            };
-          }
         }
       } else {
         return {
@@ -1057,18 +1114,20 @@ export class AdminService {
         if (!existingDepositDetails) {
           const currentDate = new Date();
 
-          const findDeposit = await this.depositModel.find({
-            $and: [
-              { sanghamId: depositRecord.sanghamId },
-              { customerId: depositRecord.customerId },
-            ],
-          });
-          findDeposit.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-
-            return dateB.getMonth() - dateA.getMonth();
-          });
+          const findDeposit = await this.depositModel
+            .find({
+              $and: [
+                { sanghamId: depositRecord.sanghamId },
+                { customerId: depositRecord.customerId },
+              ],
+            })
+            .sort({ createdAt: -1 });
+          if (findDeposit[0].total === 0) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: 'Deposit Amount has been Withdrawed Completely',
+            };
+          }
           const findDepositDate = new Date(findDeposit[0].date);
           console.log('findDepositDate', findDepositDate);
           const formattedDate = currentDate.toISOString().split('T')[0];
@@ -1339,15 +1398,24 @@ export class AdminService {
       const findsanghamDeposit = await this.depositdetailsModel.findOne({
         sanghamId: req.sanghamId,
       });
-      const findDeposits = await this.depositModel.find({
-        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-      }).sort({createdAt: -1});
+      const findDeposits = await this.depositModel
+        .find({
+          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+        })
+        .sort({ createdAt: -1 });
       // findDeposits.sort((a, b) => {
       //   const dateA = new Date(a.date);
       //   const dateB = new Date(b.date);
 
       //   return dateB.getMonth() - dateA.getMonth();
       // });
+      if (findDeposits[0].total === 0) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          messsage:
+            "Total Deposit Amount has been withdrawn, So can't process your withdraw now",
+        };
+      }
       const dateString = findsanghamDeposit.depositDate;
       const [day, month, year] = dateString.split('-');
       const numericYear = parseInt(year, 10);
@@ -1406,7 +1474,7 @@ export class AdminService {
               sanghamId: req.sanghamId,
               customerId: req.customerId,
               amount: req.amount,
-              date: currentDate,
+              date: withdrawStartDate,
               total: 0,
             });
             if (withdrawing) {
@@ -1450,7 +1518,7 @@ export class AdminService {
             sanghamId: req.sanghamId,
             customerId: req.customerId,
             amount: req.amount,
-            date: currentDate,
+            date: withdrawStartDate,
             total: 0,
           });
           if (withdrawing) {

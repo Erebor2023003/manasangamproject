@@ -13,6 +13,7 @@ import { Customer, customerSchema } from 'src/customer/schema/customer.schema';
 import { Podupu, podupuSchema } from 'src/admin/schema/podhupu.schema';
 import { Deposit, depositSchema } from 'src/admin/schema/deposit.schema';
 import { SanghamDeposit, sanghamDepositSchema } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
+import { AppuDetails, appuDetailsSchema } from 'src/appu/schema/appudetails.schema';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { SanghamDeposit, sanghamDepositSchema } from 'src/sanghamdeposits/schema
       { name: Podupu.name, schema: podupuSchema },
       { name: Deposit.name, schema: depositSchema },
       { name: SanghamDeposit.name, schema: sanghamDepositSchema },
+      { name: AppuDetails.name, schema: appuDetailsSchema },
     ]),
   ],
   controllers: [AgentController],

@@ -118,6 +118,19 @@ export class AdminController {
     }
   }
 
+  @Post('/getpodhupubyid')
+  async getPodhupuById(@Body() req: podhupuDto) {
+    try{
+      const details = await this.adminService.getPodhupuById(req);
+      return details
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/customerpodupubalance')
   async customerPodhupuBalance(@Body() req: podhupuDto) {
     try{

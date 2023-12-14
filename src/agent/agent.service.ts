@@ -11,6 +11,7 @@ import { Customer } from 'src/customer/schema/customer.schema';
 import { Podupu } from 'src/admin/schema/podhupu.schema';
 import { Deposit } from 'src/admin/schema/deposit.schema';
 import { SanghamDeposit } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
+import { AppuDetails } from 'src/appu/schema/appudetails.schema';
 
 @Injectable()
 export class AgentService {
@@ -25,6 +26,8 @@ export class AgentService {
     @InjectModel(Deposit.name) private readonly depositModel: Model<Deposit>,
     @InjectModel(SanghamDeposit.name)
     private readonly sanghamDepositModel: Model<SanghamDeposit>,
+    @InjectModel(AppuDetails.name)
+    private readonly appuDetailsModel: Model<AppuDetails>,
   ) {}
 
   private agentSanghamMap: Record<string, number> = {};
@@ -211,7 +214,7 @@ export class AgentService {
       if (findAgent) {
         if (req.tenthmemo || req.aadharImage || req.profilePicture) {
           let password;
-          if(req.password) {
+          if (req.password) {
             const bcryptPassword = await this.authService.hashPassword(
               req.password,
             );
@@ -235,22 +238,24 @@ export class AgentService {
               },
             },
           );
-          if(updateAgent) {
-            const findAgent = await this.agentModel.findOne({agentId: req.agentId});
+          if (updateAgent) {
+            const findAgent = await this.agentModel.findOne({
+              agentId: req.agentId,
+            });
             return {
               statusCode: HttpStatus.OK,
-              message: "Agent Updated Succesfully",
+              message: 'Agent Updated Succesfully',
               data: findAgent,
-            }
+            };
           } else {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
-              message: "Invalid Request",
-            }
+              message: 'Invalid Request',
+            };
           }
         } else {
           let password;
-          if(req.password) {
+          if (req.password) {
             const bcryptPassword = await this.authService.hashPassword(
               req.password,
             );
@@ -271,18 +276,20 @@ export class AgentService {
               },
             },
           );
-          if(updateAgent) {
-            const findAgent = await this.agentModel.findOne({agentId: req.agentId});
+          if (updateAgent) {
+            const findAgent = await this.agentModel.findOne({
+              agentId: req.agentId,
+            });
             return {
               statusCode: HttpStatus.OK,
-              message: "Agent Updated Succesfully",
+              message: 'Agent Updated Succesfully',
               data: findAgent,
-            }
+            };
           } else {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
-              message: "Invalid Request",
-            }
+              message: 'Invalid Request',
+            };
           }
         }
       } else {
@@ -316,7 +323,7 @@ export class AgentService {
       if (req.sanghamName) {
         req.sanghamName = req.sanghamName;
       } else {
-        req.sanghamName = 'manasangham' + ' ' + `${agentCode}${sanghamNumber}`;
+        req.sanghamName = 'sangham' + ' ' + `${agentCode}${sanghamNumber}`;
       }
       const addSangham = await this.sanghamModel.create(req);
       if (addSangham) {
@@ -485,6 +492,10 @@ export class AgentService {
 
   async getSanghamAvailableBalance(req: sanghamDto) {
     try {
+      const findCustomerInterest = await this.appuDetailsModel.findOne({
+        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+      });
+      // console.log(findCustomerInterest);
       const podupubalance = await this.podupuModel.find({
         $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }],
       });
@@ -523,11 +534,30 @@ export class AgentService {
       console.log(totalpodupuAmount);
       console.log(totalAmount);
       console.log(totalSanghamAmount);
-      return {
-        statusCode: HttpStatus.OK,
-        message: 'Available Balance of Sangham',
-        data: totalpodupuAmount + totalAmount + totalSanghamAmount,
-      };
+      if(findCustomerInterest) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Available Balance of Sangham',
+          data: {
+            availableBalance:
+              totalpodupuAmount + totalAmount + totalSanghamAmount,
+            podhupuAmount: totalpodupuAmount,
+            depositAmount: totalAmount + totalSanghamAmount,
+            interestRate: findCustomerInterest.interest,
+          },
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Available Balance of Sangham',
+          data: {
+            availableBalance:
+              totalpodupuAmount + totalAmount + totalSanghamAmount,
+            podhupuAmount: totalpodupuAmount,
+            depositAmount: totalAmount + totalSanghamAmount,
+          },
+        };
+      }
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

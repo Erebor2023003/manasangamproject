@@ -12,6 +12,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SanghamdepositsModule } from './sanghamdeposits/sanghamdeposits.module';
+import { AppuModule } from './appu/appu.module';
 
 @Module({
   imports: [AdminModule, AgentModule, CustomerModule,AuthModule,
@@ -30,7 +31,9 @@ import { SanghamdepositsModule } from './sanghamdeposits/sanghamdeposits.module'
     
     ScheduleModule.forRoot(),
     
-    SanghamdepositsModule
+    SanghamdepositsModule,
+    
+    AppuModule
   ],
   controllers: [AppController],
   providers: [AppService,{

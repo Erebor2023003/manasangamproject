@@ -18,5 +18,9 @@ export class customerDto{
     @ApiProperty()
     profileImage: string
     @ApiProperty()
+    fingerPrint: string
+    @ApiProperty()
     status: string
+    @ApiProperty()
+    otp: number
 }

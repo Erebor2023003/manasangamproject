@@ -13,3 +13,13 @@ export enum PodupuStatus {
     PAID = 'paid',
     UNPAID = 'unpaid'
 }
+
+export enum AppuStatus {
+    RECOVERED = 'recovered',
+    PENDING = 'pending'
+}
+
+export enum approveStatus {
+    APPROVED = 'approved',
+    REJECTED = 'rejected'
+}
