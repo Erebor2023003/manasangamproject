@@ -1039,6 +1039,9 @@ export class AppuService {
         sanghamId: req.sanghamId,
       });
 
+      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const totalAppuMembers = findProfessions.size;
+
       if (podupuList.length > 0) {
         const parsedDate = req.date ? new Date(req.date) : null;
 
@@ -1093,6 +1096,7 @@ export class AppuService {
             return {
               statusCode: HttpStatus.OK,
               message: 'List of Appu recovered records',
+              totalAppuMembers: totalAppuMembers,
               count: count,
               data: paidList,
             };
@@ -1112,6 +1116,7 @@ export class AppuService {
             return {
               statusCode: HttpStatus.OK,
               message: 'Paid Appu List',
+              totalAppuMembers: totalAppuMembers,
               count: count,
               data: filteredpaidList,
             };
@@ -1141,6 +1146,8 @@ export class AppuService {
       const podupuList = await this.appuModel.find({
         sanghamId: req.sanghamId,
       });
+      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const totalAppuMembers = findProfessions.size;
 
       if (podupuList.length > 0) {
         const parsedDate = req.date ? new Date(req.date) : null;
@@ -1197,6 +1204,7 @@ export class AppuService {
               statusCode: HttpStatus.OK,
               message: 'List of Appu Pending records',
               count: count,
+              totalAppuMembers: totalAppuMembers,
               data: paidList,
             };
           } else {
@@ -1216,6 +1224,7 @@ export class AppuService {
               statusCode: HttpStatus.OK,
               message: 'Pending Appu List',
               count: count,
+              totalAppuMembers: totalAppuMembers,
               data: filteredpaidList,
             };
           }

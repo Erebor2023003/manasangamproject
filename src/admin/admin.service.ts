@@ -606,6 +606,9 @@ export class AdminService {
         sanghamId: req.sanghamId,
       });
 
+      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const totalMembers = findProfessions.size;
+
       if (podupuList.length > 0) {
         const parsedDate = req.date ? new Date(req.date) : null;
 
@@ -636,15 +639,16 @@ export class AdminService {
         }
 
         const paidList = await this.podupuModel.aggregate(aggregationPipeline);
-        const count = await this.podupuModel
-          .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }] })
-          .count();
 
         if (paidList.length > 0) {
           if (!req.date) {
+            const count = await this.podupuModel
+          .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }] })
+          .count();
             return {
               statusCode: HttpStatus.OK,
               message: 'List of paid records',
+              totalMembers: totalMembers,
               count: count,
               data: paidList,
             };
@@ -659,10 +663,11 @@ export class AdminService {
                   );
                 })
               : paidList;
-
+              const count = filteredpaidList.length;
             return {
               statusCode: HttpStatus.OK,
               message: 'Paid Podhupu',
+              totalMembers: totalMembers,
               count: count,
               data: filteredpaidList,
             };
@@ -692,6 +697,9 @@ export class AdminService {
       const podupuList = await this.podupuModel.find({
         sanghamId: req.sanghamId,
       });
+
+      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const totalMembers = findProfessions.size;
 
       if (podupuList.length > 0) {
         const parsedDate = req.date ? new Date(req.date) : null;
@@ -723,15 +731,16 @@ export class AdminService {
         }
 
         const paidList = await this.podupuModel.aggregate(aggregationPipeline);
-        const count = await this.podupuModel
-          .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'unpaid' }] })
-          .count();
 
         if (paidList.length > 0) {
           if (!req.date) {
+            const count = await this.podupuModel
+            .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'unpaid' }] })
+            .count();  
             return {
               statusCode: HttpStatus.OK,
               message: 'List of paid records',
+              totalMembers: totalMembers,
               count: count,
               data: paidList,
             };
@@ -746,10 +755,11 @@ export class AdminService {
                   );
                 })
               : paidList;
-
+                const count = filteredpaidList.length;
             return {
               statusCode: HttpStatus.OK,
               message: 'Unpaid Podhupus',
+              totalMembers: totalMembers,
               count: count,
               data: filteredpaidList,
             };
