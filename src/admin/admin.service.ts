@@ -456,25 +456,25 @@ export class AdminService {
   }
 
   async getPodhupuById(req: podhupuDto) {
-    try{
-      const details = await this.podupuModel.findOne({podhuId: req.podhuId});
-      if(details) {
+    try {
+      const details = await this.podupuModel.findOne({ podhuId: req.podhuId });
+      if (details) {
         return {
           statusCode: HttpStatus.OK,
-          message: "Details of Podhupu",
+          message: 'Details of Podhupu',
           data: details,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Details of podhupu not found",
-        }
+          message: 'Details of podhupu not found',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
@@ -551,6 +551,45 @@ export class AdminService {
             statusCode: HttpStatus.NOT_FOUND,
             message: 'Not Found podhupu records of this customer',
           };
+        }
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async podhupuRecentPaid(req: podhupuDto) {
+    try {
+      const findRecentPaid = await this.podupuModel.aggregate([
+        {
+          $match: {
+            $and: [
+              { sanghamId: req.sanghamId },
+              { customerId: req.customerId },
+              { status: "paid" }
+            ],
+          },
+        },
+        {
+          $sort: {createdAt: -1}
+        },
+        {
+          $limit: 1
+        }
+      ]);
+      if(findRecentPaid.length>0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Recent Paid Podhupu Details",
+          data: findRecentPaid,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Recent Paid Podhupu Not Found",
         }
       }
     } catch (error) {
@@ -980,32 +1019,8 @@ export class AdminService {
               };
             }
           } else {
-              const formattedSavingDate = format(
-                depositStartDate,
-                "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
-              );
-              const createDeposit = await this.depositModel.create({
-                sanghamId: req.sanghamId,
-                customerId: req.customerId,
-                depositAmount: req.depositAmount,
-                date: formattedSavingDate,
-                interest: 0,
-                withdraw: 0,
-                total: req.depositAmount,
-              });
-              return {
-                statusCode: HttpStatus.OK,
-                message: 'Deposit Paid successfully',
-                data: createDeposit,
-              };
-          }
-        } else {
-            const saveFormattedDate = new Date();
-            saveFormattedDate.setDate(depositDate.getDate());
-            saveFormattedDate.setMonth(currentDate.getMonth());
-            saveFormattedDate.setFullYear(currentDate.getFullYear());
             const formattedSavingDate = format(
-              saveFormattedDate,
+              depositStartDate,
               "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
             );
             const createDeposit = await this.depositModel.create({
@@ -1022,6 +1037,30 @@ export class AdminService {
               message: 'Deposit Paid successfully',
               data: createDeposit,
             };
+          }
+        } else {
+          const saveFormattedDate = new Date();
+          saveFormattedDate.setDate(depositDate.getDate());
+          saveFormattedDate.setMonth(currentDate.getMonth());
+          saveFormattedDate.setFullYear(currentDate.getFullYear());
+          const formattedSavingDate = format(
+            saveFormattedDate,
+            "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
+          );
+          const createDeposit = await this.depositModel.create({
+            sanghamId: req.sanghamId,
+            customerId: req.customerId,
+            depositAmount: req.depositAmount,
+            date: formattedSavingDate,
+            interest: 0,
+            withdraw: 0,
+            total: req.depositAmount,
+          });
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'Deposit Paid successfully',
+            data: createDeposit,
+          };
         }
       } else {
         return {

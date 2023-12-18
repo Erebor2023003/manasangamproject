@@ -119,14 +119,27 @@ export class AppuController {
     }
   }
 
-  @Post('/getcustomerappus')
-  async getCustomerAppus(@Body() req: appuDto) {
+  @Post('/recentpaidappu')
+  async recentAppuPaid(@Body() req: appuDto) {
     try{
-      const list = await this.appuService.getAppuRecordsOfCustomer(req);
-      return list
+      const addappu = await this.appuService.appuRecentPaid(req);
+      return addappu
     } catch(error) {
       return {
-        statuscode: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/payappu')
+  async payCustomerAppu(@Body() req: appuDto) {
+    try{
+      const payappu = await this.appuService.payAppu(req);
+      return payappu
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       }
     }
@@ -153,6 +166,58 @@ export class AppuController {
     } catch(error) {
       return {
         statuscode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/appurecoveredfilter')
+  async appuPaidList(@Body() req: appuDto) {
+    try{
+      const recoveryList = await this.appuService.appuRecoveredList(req);
+      return recoveryList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/appupendingfilter')
+  async appuPendingList(@Body() req: appuDto) {
+    try{
+      const recoveryList = await this.appuService.appuPendingList(req);
+      return recoveryList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/appubalanceofcustomer')
+  async customerAppuBalance(@Body() req: appuDto) {
+    try{
+      const recoveryList = await this.appuService.appuCustomerBalance(req);
+      return recoveryList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/resendotp')
+  async resendOtp(@Body() req: customerDto) {
+    try{
+      const sendOtp = await this.appuService.resendOtpToCustomer(req);
+      return sendOtp
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       }
     }

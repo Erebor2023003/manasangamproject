@@ -12,7 +12,7 @@ export class Customer extends Document{
     @Prop()
     firstName: string
     @Prop()
-    mobileNo: string
+    mobileNo: number
     @Prop()
     aadharNo: string
     @Prop()

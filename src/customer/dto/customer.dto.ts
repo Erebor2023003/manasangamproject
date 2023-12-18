@@ -8,7 +8,7 @@ export class customerDto{
     @ApiProperty()
     firstName: string
     @ApiProperty()
-    mobileNo: string
+    mobileNo: number
     @ApiProperty()
     aadharNo: string
     @ApiProperty()

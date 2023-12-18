@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { every } from 'rxjs';
 import { sanghamDto } from 'src/agent/dto/sangham.dto';
 import { customerDto } from 'src/customer/dto/customer.dto';
+import { AppuStatus } from 'src/auth/guards/roles.enum';
 
 @Injectable()
 export class AppuService {
@@ -83,21 +84,83 @@ export class AppuService {
 
   async getCustomerAppuDetails(req: appuDetailsDto) {
     try {
-      const getdetails = await this.appuDetailsModel.findOne({
+      const findAppus = await this.appuModel
+        .find({ customerId: req.customerId })
+        .sort({ createdAt: -1 });
+      const findSurety = await this.suretyModel.find({
         $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
       });
-      if (getdetails) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'Appu Details of customer',
-          data: getdetails,
-        };
+      const suretyIds = findSurety.map((record) => record.suretyId);
+      console.log(suretyIds);
+      if (findAppus.length > 0) {
+        const details = await this.appuDetailsModel.aggregate([
+          {
+            $match: {
+              $and: [
+                { sanghamId: req.sanghamId },
+                { customerId: req.customerId },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              appuAmount: findAppus[0].appuAmount,
+              dueDate: findAppus[0].dueDate,
+              surety: suretyIds,
+            },
+          },
+          {
+            $lookup: {
+              from: 'sureties',
+              let: { suretyIds: '$surety' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $in: ['$suretyId', '$$suretyIds'],
+                    },
+                  },
+                },
+              ],
+              as: 'surety',
+            },
+          },
+        ]);
+        if (details) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'Appu Details of customer',
+            data: details,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Customer Appu Details Not Found',
+          };
+        }
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: 'Customer Appu Details Not Found',
+          message: 'No appu found',
         };
       }
+      // const details = await this.appuDetailsModel.aggregate([
+      //   {
+      //     $match: {$and: [
+      //       { sanghamId: req.sanghamId },
+      //       { customerId: req.customerId },
+      //     ]},
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "customers",
+      //       localField: "customerId",
+      //       foreignField: "customerId",
+      //       as: "customerId"
+      //     }
+      //   }
+      // ]);
+      // return details;
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -155,9 +218,7 @@ export class AppuService {
             aadharNumber: req.aadharNumber,
           });
           if (findCustomerRecord) {
-            if (
-              findCustomerRecord.fingerPrint === base64EncodedFingerprintData
-            ) {
+            if (findCustomerRecord.mobileNo === req.mobileNumber) {
               const addSurety = await this.suretyModel.create({
                 sanghamId: req.sanghamId,
                 customerId: req.customerId,
@@ -212,7 +273,7 @@ export class AppuService {
             'base64EncodedFingerprintData',
             base64EncodedFingerprintData,
           );
-          if (findCustomerRecord.fingerPrint === base64EncodedFingerprintData) {
+          if (findCustomerRecord.mobileNo === req.mobileNumber) {
             const addSurety = await this.suretyModel.create({
               sanghamId: req.sanghamId,
               customerId: req.customerId,
@@ -449,42 +510,49 @@ export class AppuService {
       });
       if (findCustomer) {
         if (req.otp === findCustomer.otp) {
-          const findAppus = await this.appuModel.find(
-            {$and: [
-              { sanghamId: findCustomer.sanghamId },
-              { customerId: findCustomer.customerId },
-            ]}
-          ).sort({createdAt: -1});
-          if(findAppus.length>0) {
-            const updateStatus = await this.appuModel.updateOne({appuId: findAppus[0].appuId},{
-              $set: {
-                approveStatus: "approved"
-              }
-            });
-            if(updateStatus) {
-              const findAppu = await this.appuModel.findOne({appuId: findAppus[0].appuId});
+          const findAppus = await this.appuModel
+            .find({
+              $and: [
+                { sanghamId: findCustomer.sanghamId },
+                { customerId: findCustomer.customerId },
+              ],
+            })
+            .sort({ createdAt: -1 });
+          if (findAppus.length > 0) {
+            const updateStatus = await this.appuModel.updateOne(
+              { appuId: findAppus[0].appuId },
+              {
+                $set: {
+                  approveStatus: 'approved',
+                },
+              },
+            );
+            if (updateStatus) {
+              const findAppu = await this.appuModel.findOne({
+                appuId: findAppus[0].appuId,
+              });
               return {
                 statusCode: HttpStatus.OK,
-                message: "Appu Approved Successfully",
-                data: findAppu
-              }
+                message: 'Appu Approved Successfully',
+                data: findAppu,
+              };
             } else {
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
-                message: "Appu Not Approved",
-              }
+                message: 'Appu Not Approved',
+              };
             }
           } else {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
-              message: "Appu does not Approved",
-            }
+              message: 'Appu does not Approved',
+            };
           }
         } else {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
-            message: "Invalid Otp",
-          }
+            message: 'Invalid Otp',
+          };
         }
       } else {
         return {
@@ -679,21 +747,199 @@ export class AppuService {
     }
   }
 
-  async getAppuRecordsOfCustomer(req: appuDto) {
+  async appuRecentPaid(req: appuDto) {
     try {
-      const getList = await this.appuModel.find({
-        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-      });
-      if (getList.length > 0) {
+      const findRecentPaid = await this.appuModel.aggregate([
+        {
+          $match: {
+            $and: [
+              { sanghamId: req.sanghamId },
+              { customerId: req.customerId },
+              { paidAmount: { $ne: 0 } },
+            ],
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $limit: 1,
+        },
+      ]);
+      if (findRecentPaid.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: 'List of Appu Records',
-          data: getList,
+          message: 'Recent Paid Appu Details',
+          data: findRecentPaid,
         };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: 'Appu Records Not Found',
+          message: 'Recent Paid Appu Not Found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async payAppu(req: appuDto) {
+    try {
+      const findAppuDetails = await this.appuDetailsModel.findOne({
+        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+      });
+      if (findAppuDetails) {
+        const currentDate = new Date();
+        const dateString = findAppuDetails.appuDate;
+        const [day, month, year] = dateString.split('-');
+        const numericYear = parseInt(year, 10);
+        const numericMonth = parseInt(month, 10);
+
+        const loanDate = new Date(
+          Date.UTC(numericYear, numericMonth - 1, +day),
+        );
+        console.log('loanDate', loanDate);
+        const appuStartDate = new Date();
+        appuStartDate.setDate(loanDate.getDate());
+        appuStartDate.setMonth(currentDate.getMonth());
+        const appuEndDate = new Date();
+        appuEndDate.setDate(appuStartDate.getDate() + 1);
+        console.log('appuStartDate', appuStartDate);
+        console.log('appuEndDate', appuEndDate);
+        const findAppu = await this.appuModel
+          .find({
+            $and: [
+              { sanghamId: req.sanghamId },
+              { customerId: req.customerId },
+            ],
+          })
+          .sort({ createdAt: -1 });
+        if (findAppu.length > 0) {
+          const dateString = findAppu[0].date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const appuFirstRecordDate = new Date(dateString);
+          console.log('appuFirstRecordDate', appuFirstRecordDate);
+          if (
+            appuStartDate.getDate() <= currentDate.getDate() &&
+            currentDate.getDate() <= appuEndDate.getDate()
+          ) {
+            if (appuFirstRecordDate.getDate() === appuStartDate.getDate()) {
+              if (req.paidAmount === 0 || !req.paidAmount) {
+                return {
+                  statuscode: HttpStatus.NOT_ACCEPTABLE,
+                  message: 'Enter Valid Amount',
+                };
+              }
+              if (
+                findAppu[0].interest === 0 &&
+                findAppu[0].fine === 0 &&
+                findAppu[0].paidAmount != 0
+              ) {
+                return {
+                  statusCode: HttpStatus.CONFLICT,
+                  message: 'This month appu has been paid Already',
+                };
+              }
+              if (findAppu[0].total === 0) {
+                return {
+                  statusCode: HttpStatus.BAD_REQUEST,
+                  message: 'Your appu has been already recovered',
+                };
+              }
+              let interest;
+              let appuTotal;
+              let fine;
+              let remainingAmount =
+                req.paidAmount - findAppu[0].interest - findAppu[0].fine;
+              let grandTotal;
+              if (req.paidAmount > findAppu[0].interest + findAppu[0].fine) {
+                interest = 0;
+                appuTotal = findAppu[0].appuAmount - remainingAmount;
+                fine = 0;
+                grandTotal =
+                  findAppu[0].total -
+                  findAppu[0].interest -
+                  findAppu[0].fine -
+                  remainingAmount;
+              } else {
+                return {
+                  statusCode: HttpStatus.NOT_ACCEPTABLE,
+                  message: 'Please pay total interest',
+                };
+              }
+              console.log('interest', interest);
+              console.log('appuTotal', appuTotal);
+              console.log('fine', fine);
+              console.log('remainingAmount', remainingAmount);
+              console.log('grandTotal', grandTotal);
+              const payamount = await this.appuModel.updateOne(
+                { appuId: findAppu[0].appuId },
+                {
+                  $set: {
+                    paidAmount: req.paidAmount,
+                    interest: interest,
+                    fine: fine,
+                    appuAmount: appuTotal,
+                    total: grandTotal,
+                  },
+                },
+              );
+              if (payamount) {
+                const findAppuRecord = await this.appuModel.findOne({
+                  appuId: findAppu[0].appuId,
+                });
+                if (findAppuRecord.total === 0) {
+                  const updateAppu = await this.appuModel.updateMany(
+                    {
+                      $and: [
+                        { sanghamId: req.sanghamId },
+                        { customerId: req.customerId },
+                      ],
+                    },
+                    {
+                      $set: { appuStatus: AppuStatus.RECOVERED },
+                    },
+                  );
+                  const findSurites = await this.suretyModel.find({
+                    $and: [
+                      { sanghamId: req.sanghamId },
+                      { customerId: req.customerId },
+                    ],
+                  });
+                  for (const surety of findSurites) {
+                    const deleteSurety = await this.suretyModel.deleteOne({
+                      suretyId: surety.suretyId,
+                    });
+                  }
+                }
+                return {
+                  statusCode: HttpStatus.OK,
+                  message: 'Appu Paid Successfully',
+                  data: findAppuRecord,
+                };
+              }
+            } else {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: 'Appu Record does not created',
+              };
+            }
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: "Customer doesn't have appu",
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Didn't found appu details, please contact admin",
         };
       }
     } catch (error) {
@@ -777,6 +1023,269 @@ export class AppuService {
             statusCode: HttpStatus.NOT_FOUND,
             message: 'Not Found podhupu records of this customer',
           };
+        }
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async appuRecoveredList(req: appuDto) {
+    try {
+      const podupuList = await this.appuModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      if (podupuList.length > 0) {
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          {
+            $match: {
+              $and: [
+                { paidAmount: { $ne: 0 } },
+                { interest: 0 },
+                { sanghamId: req.sanghamId },
+              ],
+            },
+          },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customer',
+            },
+          },
+          {
+            $addFields: {
+              paidStatus: 'paid',
+            },
+          },
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
+            $match: {
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
+            },
+          } as any);
+        }
+
+        const paidList = await this.appuModel.aggregate(aggregationPipeline);
+
+        if (paidList.length > 0) {
+          if (!req.date) {
+            const count = await this.appuModel
+              .find({
+                $and: [
+                  { sanghamId: req.sanghamId },
+                  { interest: 0 },
+                  { paidAmount: { $ne: 0 } },
+                ],
+              })
+              .count();
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'List of Appu recovered records',
+              count: count,
+              data: paidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+            const count = filteredpaidList.length;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Paid Appu List',
+              count: count,
+              data: filteredpaidList,
+            };
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found appu paid list',
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any appu records by this sangham',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async appuPendingList(req: appuDto) {
+    try {
+      const podupuList = await this.appuModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      if (podupuList.length > 0) {
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          {
+            $match: {
+              $and: [
+                { paidAmount: 0 },
+                { interest: { $ne: 0 } },
+                { sanghamId: req.sanghamId },
+              ],
+            },
+          },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customer',
+            },
+          },
+          {
+            $addFields: {
+              paidStatus: 'unpaid',
+            },
+          },
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
+            $match: {
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
+            },
+          } as any);
+        }
+
+        const paidList = await this.appuModel.aggregate(aggregationPipeline);
+
+        if (paidList.length > 0) {
+          if (!req.date) {
+            const count = await this.appuModel
+              .find({
+                $and: [
+                  { sanghamId: req.sanghamId },
+                  { interest: { $ne: 0 } },
+                  { paidAmount: 0 },
+                ],
+              })
+              .count();
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'List of Appu Pending records',
+              count: count,
+              data: paidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+            const count = filteredpaidList.length;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Pending Appu List',
+              count: count,
+              data: filteredpaidList,
+            };
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found unpaid appu list',
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any appu records by this sangham',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async appuCustomerBalance(req: appuDto) {
+    try {
+      const findAppu = await this.appuModel
+        .find({
+          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+        })
+        .sort({ createdAt: -1 });
+      if (findAppu.length > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Balance Appu of the customer',
+          data: findAppu[0].total,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          messagage: 'Unable to found balance',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async resendOtpToCustomer(req: customerDto) {
+    try {
+      const otp = Math.floor(1000 + Math.random() * 9000).toString();
+      const addOtp = await this.customerModel.updateOne(
+        { customerId: req.customerId },
+        {
+          $set: {
+            otp: otp,
+          },
+        },
+      );
+      if(addOtp) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Otp sent successfully",
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Invalid Request",
         }
       }
     } catch (error) {

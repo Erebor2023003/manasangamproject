@@ -27,4 +27,6 @@ export class appuDto{
     dueDate: string
     @ApiProperty()
     approveStatus: string
+    @ApiProperty()
+    customerName: string
 }
