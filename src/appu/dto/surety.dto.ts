@@ -7,8 +7,8 @@ export class suretyDto{
     candidateName: string
     @ApiProperty()
     mobileNumber: number
-    @ApiProperty()
-    fingerPrint: string
+    // @ApiProperty()
+    // fingerPrint: string
     @ApiProperty()
     candidateImage: string
     @ApiProperty()

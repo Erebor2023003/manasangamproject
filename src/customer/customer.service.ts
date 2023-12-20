@@ -38,8 +38,6 @@ export class CustomerService {
             req.profileImage = attachmentFile;
           }
         }
-        const rawFingerprintData = req.fingerPrint;
-        const base64EncodedFingerprintData = Buffer.from(rawFingerprintData).toString('base64');
         const addcustomer = await this.customerModel.create({
           firstName: req.firstName,
           aadharNo: req.aadharNo,
@@ -48,7 +46,6 @@ export class CustomerService {
           sanghamId: req.sanghamId,
           profileImage: req.profileImage,
           address: req.address,
-          fingerPrint: base64EncodedFingerprintData,
           otp: 0
         });
         if (addcustomer) {

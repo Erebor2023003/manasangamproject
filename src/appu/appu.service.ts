@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 import { every } from 'rxjs';
 import { sanghamDto } from 'src/agent/dto/sangham.dto';
 import { customerDto } from 'src/customer/dto/customer.dto';
-import { AppuStatus } from 'src/auth/guards/roles.enum';
+import { AppuStatus, CustomerStatus } from 'src/auth/guards/roles.enum';
 
 @Injectable()
 export class AppuService {
@@ -211,14 +211,16 @@ export class AppuService {
           }
         }
         if (statusArray.length < 2) {
-          const rawFingerprintData = req.fingerPrint;
-          const base64EncodedFingerprintData =
-            Buffer.from(rawFingerprintData).toString('base64');
           const findCustomerRecord = await this.customerModel.findOne({
             aadharNumber: req.aadharNumber,
           });
           if (findCustomerRecord) {
-            if (findCustomerRecord.mobileNo === req.mobileNumber) {
+            const contactNumber = req.mobileNumber;
+            if (
+              findCustomerRecord.mobileNo.toString() ===
+                contactNumber.toString() &&
+              findCustomerRecord.status === CustomerStatus.ACTIVE
+            ) {
               const addSurety = await this.suretyModel.create({
                 sanghamId: req.sanghamId,
                 customerId: req.customerId,
@@ -226,7 +228,6 @@ export class AppuService {
                 candidateImage: req.candidateImage,
                 aadharNumber: req.aadharNumber,
                 mobileNumber: req.mobileNumber,
-                fingerPrint: base64EncodedFingerprintData,
                 candidateId: findCustomerRecord.customerId,
               });
               if (addSurety) {
@@ -261,19 +262,19 @@ export class AppuService {
           };
         }
       } else {
-        const rawFingerprintData = req.fingerPrint;
-        const base64EncodedFingerprintData =
-          Buffer.from(rawFingerprintData).toString('base64');
         const findCustomerRecord = await this.customerModel.findOne({
           aadharNo: req.aadharNumber,
         });
         // console.log("findCustomerRecord",findCustomerRecord);
         if (findCustomerRecord) {
-          console.log(
-            'base64EncodedFingerprintData',
-            base64EncodedFingerprintData,
-          );
-          if (findCustomerRecord.mobileNo === req.mobileNumber) {
+          const contactNumber = req.mobileNumber;
+          console.log(findCustomerRecord.mobileNo);
+          console.log(contactNumber);
+          if (
+            findCustomerRecord.mobileNo.toString() ===
+              contactNumber.toString() &&
+            findCustomerRecord.status === CustomerStatus.ACTIVE
+          ) {
             const addSurety = await this.suretyModel.create({
               sanghamId: req.sanghamId,
               customerId: req.customerId,
@@ -281,7 +282,6 @@ export class AppuService {
               candidateImage: req.candidateImage,
               aadharNumber: req.aadharNumber,
               mobileNumber: req.mobileNumber,
-              fingerPrint: base64EncodedFingerprintData,
               candidateId: findCustomerRecord.customerId,
             });
             if (addSurety) {
@@ -299,7 +299,7 @@ export class AppuService {
           } else {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
-              message: 'FingerPrint is not matched',
+              message: 'Mobile Number is not matched',
             };
           }
         } else {
@@ -1039,7 +1039,9 @@ export class AppuService {
         sanghamId: req.sanghamId,
       });
 
-      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const findProfessions = new Set(
+        podupuList.map((record) => record.customerId),
+      );
       const totalAppuMembers = findProfessions.size;
 
       if (podupuList.length > 0) {
@@ -1146,7 +1148,9 @@ export class AppuService {
       const podupuList = await this.appuModel.find({
         sanghamId: req.sanghamId,
       });
-      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const findProfessions = new Set(
+        podupuList.map((record) => record.customerId),
+      );
       const totalAppuMembers = findProfessions.size;
 
       if (podupuList.length > 0) {
@@ -1286,16 +1290,16 @@ export class AppuService {
           },
         },
       );
-      if(addOtp) {
+      if (addOtp) {
         return {
           statusCode: HttpStatus.OK,
-          message: "Otp sent successfully",
-        }
+          message: 'Otp sent successfully',
+        };
       } else {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: "Invalid Request",
-        }
+          message: 'Invalid Request',
+        };
       }
     } catch (error) {
       return {

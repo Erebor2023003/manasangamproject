@@ -10,8 +10,8 @@ export class Surety extends Document{
     candidateName: string
     @Prop()
     mobileNumber: number
-    @Prop()
-    fingerPrint: string
+    // @Prop()
+    // fingerPrint: string
     @Prop()
     candidateImage: string
     @Prop()

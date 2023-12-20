@@ -21,8 +21,8 @@ export class Customer extends Document{
     aadharImage: string
     @Prop()
     profileImage: string
-    @Prop()
-    fingerPrint: string
+    // @Prop()
+    // fingerPrint: string
     @Prop({default: CustomerStatus.ACTIVE})
     status: string
     @Prop()

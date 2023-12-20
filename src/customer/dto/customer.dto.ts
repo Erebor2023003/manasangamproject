@@ -17,8 +17,8 @@ export class customerDto{
     aadharImage: string
     @ApiProperty()
     profileImage: string
-    @ApiProperty()
-    fingerPrint: string
+    // @ApiProperty()
+    // fingerPrint: string
     @ApiProperty()
     status: string
     @ApiProperty()
