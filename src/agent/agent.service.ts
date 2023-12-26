@@ -306,6 +306,46 @@ export class AgentService {
     }
   }
 
+  // async createSangham(req: sanghamDto) {
+  //   try {
+  //     if (!this.agentSanghamMap[req.agentId]) {
+  //       this.agentSanghamMap[req.agentId] = 1;
+  //     } else {
+  //       this.agentSanghamMap[req.agentId]++;
+  //     }
+
+  //     const agentCode = String.fromCharCode(
+  //       65 + Object.keys(this.agentSanghamMap).length - 1,
+  //     );
+  //     const sanghamNumber = this.agentSanghamMap[req.agentId]
+  //       .toString()
+  //       .padStart(2, '0');
+  //     if (req.sanghamName) {
+  //       req.sanghamName = req.sanghamName;
+  //     } else {
+  //       req.sanghamName = 'sangham' + ' ' + `${agentCode}${sanghamNumber}`;
+  //     }
+  //     const addSangham = await this.sanghamModel.create(req);
+  //     if (addSangham) {
+  //       return {
+  //         statusCode: HttpStatus.OK,
+  //         message: 'Sangham added to the Agent Succesfully',
+  //         data: addSangham,
+  //       };
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Invalid request',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
+
   async createSangham(req: sanghamDto) {
     try {
       if (!this.agentSanghamMap[req.agentId]) {
@@ -317,19 +357,60 @@ export class AgentService {
       const agentCode = String.fromCharCode(
         65 + Object.keys(this.agentSanghamMap).length - 1,
       );
-      const sanghamNumber = this.agentSanghamMap[req.agentId]
-        .toString()
-        .padStart(2, '0');
-      if (req.sanghamName) {
-        req.sanghamName = req.sanghamName;
-      } else {
-        req.sanghamName = 'sangham' + ' ' + `${agentCode}${sanghamNumber}`;
+
+      // Retrieve the latest Sangham number for the agent
+      const latestSangham = await this.sanghamModel
+        .find({
+          agentId: req.agentId,
+        })
+        .sort({ createdAt: -1 });
+      const lastRecordNumber = latestSangham[0].sanghamName.split(' ');
+      // console.log('recordNameArray', lastRecordNumber);
+      const inputString = lastRecordNumber[1];
+      const matches = inputString.match(/([a-zA-Z]+)(\d+)/);
+      let alphabeticPart;
+      let numericPart;
+      if(matches) {
+        alphabeticPart = matches[1];
+        numericPart =  parseInt(matches[2], 10);
+        numericPart++;
       }
-      const addSangham = await this.sanghamModel.create(req);
+      // console.log(numericPart)
+      let sanghamNumber;
+      if (latestSangham) {
+        sanghamNumber = (numericPart).toString().padStart(2, '0');
+      } else {
+        sanghamNumber = '01';
+      }
+
+      let newSanghamName;
+      if (req.sanghamName) {
+        newSanghamName = req.sanghamName;
+      } else {
+        newSanghamName = 'sangham' + ' ' + `${agentCode}${sanghamNumber}`;
+      }
+
+      // Check if the generated Sangham name already exists
+      const isExisting = await this.sanghamModel.findOne({
+        where: { sanghamName: newSanghamName },
+      });
+
+      if (isExisting) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Sangham name already exists',
+        };
+      }
+
+      const addSangham = await this.sanghamModel.create({
+        ...req,
+        sanghamName: newSanghamName,
+      });
+
       if (addSangham) {
         return {
           statusCode: HttpStatus.OK,
-          message: 'Sangham added to the Agent Succesfully',
+          message: 'Sangham added to the Agent Successfully',
           data: addSangham,
         };
       } else {
@@ -534,7 +615,7 @@ export class AgentService {
       console.log(totalpodupuAmount);
       console.log(totalAmount);
       console.log(totalSanghamAmount);
-      if(findCustomerInterest) {
+      if (findCustomerInterest) {
         return {
           statusCode: HttpStatus.OK,
           message: 'Available Balance of Sangham',
@@ -567,66 +648,66 @@ export class AgentService {
   }
 
   async getAllSanghams() {
-    try{
+    try {
       const sanghams = await this.sanghamModel.aggregate([
         {
           $lookup: {
-            from: "agents",
-            localField: "agentId",
-            foreignField: "agentId",
-            as: "agentId",
-          }
-        }
+            from: 'agents',
+            localField: 'agentId',
+            foreignField: 'agentId',
+            as: 'agentId',
+          },
+        },
       ]);
-      if(sanghams.length>0) {
+      if (sanghams.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: "List of All sanghams",
+          message: 'List of All sanghams',
           data: sanghams,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Sanghams Not Found",
-        }
+          message: 'Sanghams Not Found',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   async getAllCustomers() {
-    try{
+    try {
       const customers = await this.customerModel.aggregate([
         {
           $lookup: {
-            from: "sanghams",
-            localField: "sanghamId",
-            foreignField: "sanghamId",
-            as: "sanghamId",
-          }
-        }
+            from: 'sanghams',
+            localField: 'sanghamId',
+            foreignField: 'sanghamId',
+            as: 'sanghamId',
+          },
+        },
       ]);
-      if(customers.length>0) {
+      if (customers.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: "List of All Customers",
+          message: 'List of All Customers',
           data: customers,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Customers not found",
-        }
+          message: 'Customers not found',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 }
