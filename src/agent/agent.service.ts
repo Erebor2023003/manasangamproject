@@ -346,6 +346,387 @@ export class AgentService {
   //   }
   // }
 
+  // async createSangham(req: sanghamDto) {
+  //   try {
+  //     if (!this.agentSanghamMap[req.agentId]) {
+  //       this.agentSanghamMap[req.agentId] = 1;
+  //     } else {
+  //       this.agentSanghamMap[req.agentId]++;
+  //     }
+
+  //     // Retrieve the latest Sangham number for the agent
+  //     const latestSangham = await this.sanghamModel
+  //       .find({
+  //         agentId: req.agentId,
+  //       })
+  //       .sort({ createdAt: -1 });
+  //     if(latestSangham.length>0) {
+  //       const lastRecordNumber = latestSangham[0].sanghamName.split(' ');
+  //     const inputString = lastRecordNumber[1];
+  //     const matches = inputString.match(/([a-zA-Z]+)(\d+)/);
+  //     let alphabeticPart;
+  //     let numericPart;
+  //     if(matches) {
+  //       alphabeticPart = matches[1];
+  //       numericPart =  parseInt(matches[2], 10);
+  //       numericPart++;
+  //     }
+  //     // console.log(numericPart)
+  //     const sanghamNumber = (numericPart).toString().padStart(2, '0');
+  //     if (req.sanghamName) {
+  //       req.sanghamName = req.sanghamName;
+  //     } else {
+  //       req.sanghamName = 'sangham' + ' ' + `${alphabeticPart}${sanghamNumber}`;
+  //     }
+  //     } else {
+  //       const agentCode = String.fromCharCode(
+  //         65 + Object.keys(this.agentSanghamMap).length - 1,
+  //       );
+  //       const sanghamNumber = "01";
+  //           if (req.sanghamName) {
+  //             req.sanghamName = req.sanghamName;
+  //           } else {
+  //             req.sanghamName = 'sangham' + ' ' + `${agentCode}${sanghamNumber}`;
+  //           }
+  //           console.log(req.sanghamName);
+  //     }
+
+  //     // Check if the generated Sangham name already exists
+  //     const isExisting = await this.sanghamModel.findOne({
+  //       sanghamName: req.sanghamName
+  //     });
+
+  //     if (isExisting) {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Sangham name already exists',
+  //       };
+  //     }
+
+  //     const addSangham = await this.sanghamModel.create(req);
+
+  //     if (addSangham) {
+  //       return {
+  //         statusCode: HttpStatus.OK,
+  //         message: 'Sangham added to the Agent Successfully',
+  //         data: addSangham,
+  //       };
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Invalid request',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
+
+  // async createSangham(req: sanghamDto) {
+  //   try {
+  //     if (!this.agentSanghamMap[req.agentId]) {
+  //       this.agentSanghamMap[req.agentId] = 1;
+  //     } else {
+  //       this.agentSanghamMap[req.agentId]++;
+  //     }
+
+  //     // Retrieve the latest Sangham number for the agent
+  //     const latestSangham = await this.sanghamModel
+  //       .find({ agentId: req.agentId })
+  //       .sort({ createdAt: -1 });
+
+  //     let alphabeticPart;
+  //     let numericPart;
+
+  //     if (latestSangham.length > 0) {
+  //       const lastRecordNumber = latestSangham[0].sanghamName.split(' ');
+  //       const inputString = lastRecordNumber[1];
+  //       const matches = inputString.match(/([a-zA-Z]+)(\d+)/);
+
+  //       if (matches) {
+  //         alphabeticPart = matches[1];
+  //         numericPart = parseInt(matches[2], 10);
+  //         numericPart++;
+  //       }
+  //     } else {
+  //       // If no previous Sangham records, use a default value
+  //       alphabeticPart = String.fromCharCode(65 + parseInt(req.agentId, 10) - 1);
+  //       numericPart = 1;
+  //     }
+
+  //     const sanghamNumber = numericPart.toString().padStart(2, '0');
+
+  //     if (req.sanghamName) {
+  //       req.sanghamName = req.sanghamName;
+  //     } else {
+  //       req.sanghamName = 'sangham' + ' ' + `${alphabeticPart}${sanghamNumber}`;
+  //     }
+
+  //     // Check if the generated Sangham name already exists
+  //     const isExisting = await this.sanghamModel.findOne({
+  //       sanghamName: req.sanghamName,
+  //     });
+
+  //     if (isExisting) {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Sangham name already exists',
+  //       };
+  //     }
+
+  //     const addSangham = await this.sanghamModel.create(req);
+
+  //     if (addSangham) {
+  //       return {
+  //         statusCode: HttpStatus.OK,
+  //         message: 'Sangham added to the Agent Successfully',
+  //         data: addSangham,
+  //       };
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Invalid request',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
+
+  // async createSangham(req: sanghamDto) {
+  //   try {
+  //     if (!this.agentSanghamMap[req.agentId]) {
+  //       this.agentSanghamMap[req.agentId] = 1;
+  //     } else {
+  //       this.agentSanghamMap[req.agentId]++;
+  //     }
+
+  //     // Retrieve the latest Sangham number for the agent
+  //     const latestSangham = await this.sanghamModel
+  //       .find({ agentId: req.agentId })
+  //       .sort({ createdAt: -1 });
+
+  //     let alphabeticPart;
+  //     let numericPart;
+
+  //     if (latestSangham.length > 0) {
+  //       const lastRecordNumber = latestSangham[0].sanghamName.split(' ');
+  //       const inputString = lastRecordNumber[1];
+  //       const matches = inputString.match(/([a-zA-Z]+)(\d+)/);
+
+  //       if (matches) {
+  //         alphabeticPart = matches[1];
+  //         numericPart = parseInt(matches[2], 10);
+  //         numericPart++;
+  //       }
+  //     } else {
+  //       // If no previous Sangham records, use the next alphabet
+  //       const currentAgentCode = String.fromCharCode(65 + Object.keys(this.agentSanghamMap).length - 1);
+  //       alphabeticPart = String.fromCharCode(currentAgentCode.charCodeAt(0) + 1);
+  //       numericPart = 1;
+  //     }
+
+  //     const sanghamNumber = numericPart.toString().padStart(2, '0');
+
+  //     if (req.sanghamName) {
+  //       req.sanghamName = req.sanghamName;
+  //     } else {
+  //       req.sanghamName = 'sangham' + ' ' + `${alphabeticPart}${sanghamNumber}`;
+  //     }
+  //     console.log(req.sanghamName);
+  //     // Check if the generated Sangham name already exists
+  //     const isExisting = await this.sanghamModel.findOne({
+  //       sanghamName: req.sanghamName,
+  //     });
+
+  //     if (isExisting) {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Sangham name already exists',
+  //       };
+  //     }
+
+  //     const addSangham = await this.sanghamModel.create(req);
+
+  //     if (addSangham) {
+  //       return {
+  //         statusCode: HttpStatus.OK,
+  //         message: 'Sangham added to the Agent Successfully',
+  //         data: addSangham,
+  //       };
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Invalid request',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
+
+  // async createSangham(req: sanghamDto) {
+  //   try {
+  //     if (!this.agentSanghamMap[req.agentId]) {
+  //       this.agentSanghamMap[req.agentId] = 1;
+  //     } else {
+  //       this.agentSanghamMap[req.agentId]++;
+  //     }
+
+  //     // Retrieve the latest Sangham number for the agent
+  //     const latestSangham = await this.sanghamModel
+  //       .find({ agentId: req.agentId })
+  //       .sort({ createdAt: -1 });
+
+  //     let alphabeticPart;
+  //     let numericPart;
+
+  //     if (latestSangham.length > 0) {
+  //       const lastRecordNumber = latestSangham[0].sanghamName.split(' ');
+  //       const inputString = lastRecordNumber[1];
+  //       const matches = inputString.match(/([a-zA-Z]+)(\d+)/);
+
+  //       if (matches) {
+  //         alphabeticPart = matches[1];
+  //         numericPart = parseInt(matches[2], 10);
+  //         numericPart++;
+  //       }
+  //     } else {
+  //       // If no previous Sangham records, find the next available alphabet
+  //       const usedAlphabets = new Set(
+  //         Object.values(this.agentSanghamMap).map((count) =>
+  //           String.fromCharCode(65 + count - 1),
+  //         ),
+  //       );
+  //       const availableAlphabet = Array.from({ length: 26 }, (_, i) =>
+  //         String.fromCharCode(65 + i),
+  //       ).find((alphabet) => !usedAlphabets.has(alphabet));
+
+  //       alphabeticPart = availableAlphabet || 'A';
+  //       numericPart = 1;
+  //     }
+
+  //     const sanghamNumber = numericPart.toString().padStart(2, '0');
+
+  //     if (req.sanghamName) {
+  //       req.sanghamName = req.sanghamName;
+  //     } else {
+  //       req.sanghamName = 'sangham' + ' ' + `${alphabeticPart}${sanghamNumber}`;
+  //     }
+  //     console.log(req.sanghamName);
+  //     // Check if the generated Sangham name already exists
+  //     const isExisting = await this.sanghamModel.findOne({
+  //       sanghamName: req.sanghamName,
+  //     });
+
+  //     if (isExisting) {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Sangham name already exists',
+  //       };
+  //     }
+
+  //     const addSangham = await this.sanghamModel.create(req);
+
+  //     if (addSangham) {
+  //       return {
+  //         statusCode: HttpStatus.OK,
+  //         message: 'Sangham added to the Agent Successfully',
+  //         data: addSangham,
+  //       };
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Invalid request',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
+
+  // async createSangham(req: sanghamDto) {
+  //   try {
+  //     if (!this.agentSanghamMap[req.agentId]) {
+  //       this.agentSanghamMap[req.agentId] = 1;
+  //     } else {
+  //       this.agentSanghamMap[req.agentId]++;
+  //     }
+
+  //     const alphabeticPart = this.findNextAvailableAlphabet(req.agentId);
+  //     const numericPart = this.agentSanghamMap[req.agentId];
+  //     // console.log(numericPart);
+  //     const sanghamNumber = numericPart.toString().padStart(2, '0');
+  //     // console.log(alphabeticPart);
+  //     if (req.sanghamName) {
+  //       req.sanghamName = req.sanghamName;
+  //     } else {
+  //       req.sanghamName = 'sangham' + ' ' + `${alphabeticPart}${sanghamNumber}`;
+  //     }
+  //     console.log(req.sanghamName);
+  //     // Check if the generated Sangham name already exists
+  //     const isExisting = await this.sanghamModel.findOne({
+  //       sanghamName: req.sanghamName,
+  //     });
+
+  //     if (isExisting) {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Sangham name already exists',
+  //       };
+  //     }
+
+  //     const addSangham = await this.sanghamModel.create(req);
+
+  //     if (addSangham) {
+  //       return {
+  //         statusCode: HttpStatus.OK,
+  //         message: 'Sangham added to the Agent Successfully',
+  //         data: addSangham,
+  //       };
+  //     } else {
+  //       return {
+  //         statusCode: HttpStatus.BAD_REQUEST,
+  //         message: 'Invalid request',
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: error,
+  //     };
+  //   }
+  // }
+
+  // findNextAvailableAlphabet(agentId: string): string {
+  //   const usedAlphabets = new Set(Object.values(this.agentSanghamMap).map(count => String.fromCharCode(65 + count - 1)));
+  //   console.log(usedAlphabets);
+  //   const agentCode = String.fromCharCode(65 + parseInt(agentId, 10) - 1);
+
+  //   for (let i = 0; i < 26; i++) {
+  //     const nextAlphabet = String.fromCharCode(65 + i);
+  //     console.log(nextAlphabet);
+  //     if (!usedAlphabets.has(nextAlphabet) && nextAlphabet > agentCode) {
+  //       return nextAlphabet;
+  //     }
+  //   }
+
+  //   // If no available alphabet is found, fallback to agent code
+  //   return agentCode;
+  // }
+
   async createSangham(req: sanghamDto) {
     try {
       if (!this.agentSanghamMap[req.agentId]) {
@@ -354,45 +735,43 @@ export class AgentService {
         this.agentSanghamMap[req.agentId]++;
       }
 
-      const agentCode = String.fromCharCode(
-        65 + Object.keys(this.agentSanghamMap).length - 1,
-      );
-
-      // Retrieve the latest Sangham number for the agent
-      const latestSangham = await this.sanghamModel
-        .find({
-          agentId: req.agentId,
-        })
+      const findAgents = await this.sanghamModel
+        .find({ agentId: req.agentId })
         .sort({ createdAt: -1 });
-      const lastRecordNumber = latestSangham[0].sanghamName.split(' ');
-      // console.log('recordNameArray', lastRecordNumber);
-      const inputString = lastRecordNumber[1];
-      const matches = inputString.match(/([a-zA-Z]+)(\d+)/);
-      let alphabeticPart;
-      let numericPart;
-      if(matches) {
+      if (findAgents.length > 0) {
+        const nameString = findAgents[0].sanghamName.split(' ');
+        const matches = nameString[1].match(/([a-zA-Z]+)(\d+)/);
+        let alphabeticPart;
+        let numericPart;
         alphabeticPart = matches[1];
-        numericPart =  parseInt(matches[2], 10);
+        numericPart = parseInt(matches[2], 10);
         numericPart++;
-      }
-      // console.log(numericPart)
-      let sanghamNumber;
-      if (latestSangham) {
-        sanghamNumber = (numericPart).toString().padStart(2, '0');
-      } else {
-        sanghamNumber = '01';
-      }
 
-      let newSanghamName;
-      if (req.sanghamName) {
-        newSanghamName = req.sanghamName;
+        const sanghamNumber = numericPart.toString().padStart(2, '0');
+        if (req.sanghamName) {
+          req.sanghamName = req.sanghamName;
+        } else {
+          req.sanghamName =
+            'sangham' + ' ' + `${alphabeticPart}${sanghamNumber}`;
+        }
       } else {
-        newSanghamName = 'sangham' + ' ' + `${agentCode}${sanghamNumber}`;
-      }
+        const alphabeticPart = await this.findNextAvailableAlphabet();
+        console.log("alphabeticPart",alphabeticPart);
+        const numericPart = this.agentSanghamMap[req.agentId];
 
+        const sanghamNumber = numericPart.toString().padStart(2, '0');
+
+        if (req.sanghamName) {
+          req.sanghamName = req.sanghamName;
+        } else {
+          req.sanghamName =
+            'sangham' + ' ' + `${alphabeticPart}${sanghamNumber}`;
+        }
+        console.log(req.sanghamName);
+      }
       // Check if the generated Sangham name already exists
       const isExisting = await this.sanghamModel.findOne({
-        where: { sanghamName: newSanghamName },
+        sanghamName: req.sanghamName,
       });
 
       if (isExisting) {
@@ -402,10 +781,7 @@ export class AgentService {
         };
       }
 
-      const addSangham = await this.sanghamModel.create({
-        ...req,
-        sanghamName: newSanghamName,
-      });
+      const addSangham = await this.sanghamModel.create(req);
 
       if (addSangham) {
         return {
@@ -425,6 +801,28 @@ export class AgentService {
         message: error,
       };
     }
+  }
+
+  async findNextAvailableAlphabet() {
+    const sanghamsData = await this.sanghamModel.find();
+    const allUsedAlphabets = new Set(
+      sanghamsData.map((sangham) =>
+        sangham.sanghamName.charAt(8).toUpperCase(),
+      ),
+    );
+    console.log('allUsedAlphabets', allUsedAlphabets);
+    for (let i = 65; i <= 90; i++) {
+      const currentAlphabet = String.fromCharCode(i);
+
+      // Check if the current alphabet is not in the used set
+      if (!allUsedAlphabets.has(currentAlphabet)) {
+        console.log('Next available alphabet:', currentAlphabet);
+        return currentAlphabet; // Return the next available alphabet
+      }
+    }
+
+    console.log('All alphabets are used');
+    return 'AA';
   }
 
   async getSanghamsByAgentId(req: sanghamDto) {
