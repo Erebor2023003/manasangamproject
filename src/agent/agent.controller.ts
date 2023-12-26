@@ -157,4 +157,34 @@ export class AgentController {
       }
     }
   }
+
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get('/getallsanghams')
+  async getAllSanghams() {
+    try{
+      const getSanghams = await this.agentService.getAllSanghams();
+      return getSanghams
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get('/getallcustomers')
+  async getAllCustomers() {
+    try{
+      const getCustomers = await this.agentService.getAllCustomers();
+      return getCustomers
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

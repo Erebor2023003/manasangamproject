@@ -565,4 +565,68 @@ export class AgentService {
       };
     }
   }
+
+  async getAllSanghams() {
+    try{
+      const sanghams = await this.sanghamModel.aggregate([
+        {
+          $lookup: {
+            from: "agents",
+            localField: "agentId",
+            foreignField: "agentId",
+            as: "agentId",
+          }
+        }
+      ]);
+      if(sanghams.length>0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "List of All sanghams",
+          data: sanghams,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Sanghams Not Found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async getAllCustomers() {
+    try{
+      const customers = await this.customerModel.aggregate([
+        {
+          $lookup: {
+            from: "sanghams",
+            localField: "sanghamId",
+            foreignField: "sanghamId",
+            as: "sanghamId",
+          }
+        }
+      ]);
+      if(customers.length>0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "List of All Customers",
+          data: customers,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Customers not found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }
