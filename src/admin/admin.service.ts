@@ -482,9 +482,15 @@ export class AdminService {
       const findCustomer = await this.podupuModel.find({
         customerId: req.customerId,
       });
-      findCustomer.filter((podupuRecord) => podupuRecord.status === "paid");
-      if (findCustomer.length > 0) {
-        const balance = findCustomer.reduce((accumulator, currentValue) => {
+      const podupuBalanceRecords = [];
+      findCustomer.map((podupuRecord) => {
+        if(podupuRecord.status === "paid") {
+          podupuBalanceRecords.push(podupuRecord);
+        }
+      });
+      console.log(podupuBalanceRecords);
+      if (podupuBalanceRecords.length > 0) {
+        const balance = podupuBalanceRecords.reduce((accumulator, currentValue) => {
           return accumulator + currentValue.podhupuAmount;
         }, 0);
         return {
