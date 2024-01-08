@@ -331,33 +331,32 @@ export class AdminService {
       const podupuonedayLater = podupuDate.getTime() + 24 * 60 * 60 * 1000;
       const podupuextraDay = new Date(podupuonedayLater);
       podupuextraDay.setMonth(currentDate.getMonth());
-      console.log(podupuextraDay);
+      podupuextraDay.setFullYear(currentDate.getFullYear());
+      console.log("podupuextraDay",podupuextraDay);
       if (
         podupuDate.getDate() === currentDate.getDate() ||
         podupuextraDay.getDate() === currentDate.getDate()
       ) {
         const findPodhupu = await this.podupuModel.find({
           $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-        });
-        findPodhupu.sort((a, b) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-
-          return dateB.getMonth() - dateA.getMonth();
-        });
+        }).sort({createdAt: -1});
         const parsepodupurecordDate = new Date(findPodhupu[0].date);
-        console.log(parsepodupurecordDate);
+        console.log("parsepodupurecordDate",parsepodupurecordDate);
         console.log(
           podupuextraDay.getDate() === currentDate.getDate() &&
             podupuextraDay.getMonth() === currentDate.getMonth() &&
             podupuextraDay.getFullYear() === currentDate.getFullYear(),
         );
         console.log(podupuDate.getDate() === currentDate.getDate());
-        console.log(podupuDate);
-        console.log(podupuextraDay);
-
+        console.log("podupuDate",podupuDate);
+        console.log("podupuextraDay",podupuextraDay);
+        console.log("currentDate", currentDate);
+        console.log(parsepodupurecordDate.getDate() === podupuDate.getDate());
+        console.log(podupuextraDay.getDate() === currentDate.getDate() &&
+        podupuextraDay.getMonth() === currentDate.getMonth() &&
+        podupuextraDay.getFullYear() === currentDate.getFullYear());
         if (
-          podupuDate.getDate() === currentDate.getDate() ||
+          (podupuDate.getDate() === currentDate.getDate()) ||
           (podupuextraDay.getDate() === currentDate.getDate() &&
             podupuextraDay.getMonth() === currentDate.getMonth() &&
             podupuextraDay.getFullYear() === currentDate.getFullYear())
