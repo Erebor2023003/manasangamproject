@@ -482,9 +482,10 @@ export class AdminService {
       const findCustomer = await this.podupuModel.find({
         customerId: req.customerId,
       });
+      findCustomer.filter((podupuRecord) => podupuRecord.status === "paid");
       if (findCustomer.length > 0) {
         const balance = findCustomer.reduce((accumulator, currentValue) => {
-          return accumulator + currentValue.Total;
+          return accumulator + currentValue.podhupuAmount;
         }, 0);
         return {
           statusCode: HttpStatus.OK,
