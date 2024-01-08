@@ -183,7 +183,7 @@ export class AdminService {
       if (getDetails) {
         return {
           statusCode: HttpStatus.OK,
-          message: 'PodupuDetails of a customer',
+          message: 'PodupuDetails of a Sangham',
           data: getDetails,
         };
       } else {
