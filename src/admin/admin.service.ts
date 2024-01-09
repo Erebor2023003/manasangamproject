@@ -177,9 +177,17 @@ export class AdminService {
 
   async getPodhupuDetailsbyid(req: podupuDetailsDto) {
     try {
-      const getDetails = await this.podupudetailsModel.findOne({
-        sanghamId: req.sanghamId,
-      });
+      const getDetails = await this.podupudetailsModel.aggregate([
+        {$match: {sanghamId: req.sanghamId}},
+        {
+          $lookup: {
+            from: "sanghams",
+            localField: "sanghamId",
+            foreignField: "sanghamId",
+            as: "sanghamId"
+          }
+        }
+      ]);
       if (getDetails) {
         return {
           statusCode: HttpStatus.OK,
@@ -909,6 +917,11 @@ export class AdminService {
           message: 'Deposit Details of Sangham',
           data: getSanghamDetails,
         };
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Deposit Details of Sangham not found"
+        }
       }
     } catch (error) {
       return {
