@@ -211,11 +211,16 @@ export class AdminService {
   async createPodupu() {
     try {
       const customers = await this.customerModel.find();
+      // console.log("customers",customers);
       const currentDate = new Date();
       for (const customerRecord of customers) {
         const findPodhuDetails = await this.podupudetailsModel.findOne({
           sanghamId: customerRecord.sanghamId,
         });
+        console.log("findPodhuDetails",findPodhuDetails)
+        if(!findPodhuDetails) {
+          continue;
+        }
         const dateString = findPodhuDetails.startDate;
         const [day, month, year] = dateString.split('-');
         const numericYear = parseInt(year, 10);
@@ -224,12 +229,12 @@ export class AdminService {
         const depositDate = new Date(
           Date.UTC(numericYear, numericMonth - 1, +day),
         );
-        // console.log(depositDate);
+        console.log("depositDate",depositDate);
         const podhupuDate = new Date();
         podhupuDate.setDate(depositDate.getDate());
         podhupuDate.setMonth(currentDate.getMonth());
         podhupuDate.setFullYear(currentDate.getFullYear());
-        console.log(podhupuDate);
+        console.log("podhupuDate",podhupuDate);
         if (
           podhupuDate.getDate() === currentDate.getDate() &&
           podhupuDate.getMonth() === currentDate.getMonth() &&
@@ -312,7 +317,8 @@ export class AdminService {
             return createPodhupuRecord;
           }
         } else {
-          return `records can't be created`;
+          // return `records can't be created`;
+          continue;
         }
       }
     } catch (error) {
