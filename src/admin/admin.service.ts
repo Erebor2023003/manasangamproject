@@ -188,7 +188,7 @@ export class AdminService {
           }
         }
       ]);
-      if (getDetails) {
+      if (getDetails.length>0) {
         return {
           statusCode: HttpStatus.OK,
           message: 'PodupuDetails of a Sangham',
