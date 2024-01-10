@@ -54,4 +54,17 @@ export class CustomerController {
       }
     }
   }
+
+  @Post('/getcustomerdetails')
+  async getCustomerDetailsById(@Body() req: customerDto) {
+    try{
+      const getdetails = await this.customerService.getCustomerDetailsById(req);
+      return getdetails
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

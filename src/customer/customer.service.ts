@@ -4,6 +4,7 @@ import { Customer } from './schema/customer.schema';
 import { Model } from 'mongoose';
 import { customerDto } from './dto/customer.dto';
 import { SharedService } from 'src/agent/shared.service';
+import { CustomerStatus } from 'src/auth/guards/roles.enum';
 
 @Injectable()
 export class CustomerService {
@@ -132,6 +133,142 @@ export class CustomerService {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  async updateCustomer(req: customerDto,image) {
+    try{
+      const findCustomer = await this.customerModel.findOne({customerId: req.customerId});
+      if(!findCustomer) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Customer not Found",
+        }
+      } else {
+        if(req.aadharImage || req.profileImage) {
+          if (image) {
+            if (image.aadharImage && image.aadharImage[0]) {
+              const attachmentFile = await this.sharedService.saveFile(
+                image.aadharImage[0],
+              );
+              req.aadharImage = attachmentFile;
+            }
+            if (image.profileImage && image.profileImage[0]) {
+              const attachmentFile = await this.sharedService.saveFile(
+                image.profileImage[0],
+              );
+  
+              req.profileImage = attachmentFile;
+            }
+          }
+
+          const updateCustomer = await this.customerModel.updateOne({customerId: req.customerId},{
+            $set: {
+              firstName: req.firstName,
+              mobileNo: req.mobileNo,
+              aadharNo: req.aadharNo,
+              address: req.address,
+              aadharImage: req.aadharImage,
+              profileImage: req.profileImage
+            }
+          });
+          if(updateCustomer) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: "Customer Updated Successfully",
+              data: updateCustomer,
+            }
+          } else {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Invalid Request",
+            }
+          }
+        } else {
+          const updateCustomer = await this.customerModel.updateOne({customerId: req.customerId},{
+            $set: {
+              firstName: req.firstName,
+              mobileNo: req.mobileNo,
+              aadharNo: req.aadharNo,
+              address: req.address,
+            }
+          });
+          if(updateCustomer) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: "Customer Updated Successfully",
+              data: updateCustomer,
+            }
+          } else {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Invalid Request",
+            }
+          }
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async getCustomerDetailsById(req: customerDto) {
+    try{
+      const getcustomer = await this.customerModel.findOne({customerId: req.customerId});
+      if(getcustomer) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Customer Details",
+          data: getcustomer,
+        }
+      } else {
+        return{
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Customer Detaild Not Found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async unblockCustomer(req: customerDto) {
+    try{
+      const findCustomer = await this.customerModel.findOne({customerId: req.customerId});
+      if(!findCustomer) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Customer not Found",
+        }
+      } else {
+        const changeStatus = await this.customerModel.updateOne({customerId: req.customerId},{
+          $set: {
+            status: CustomerStatus.ACTIVE
+          }
+        });
+        if(changeStatus) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: "Customer Unblocked Successfully",
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: "Can't unblock Customer",
+          }
+        } 
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
     }
   }
 }
