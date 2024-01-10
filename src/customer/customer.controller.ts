@@ -12,7 +12,7 @@ export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.AGENT)
+  @Roles(Role.AGENT,Role.ADMIN)
   @Post('/addcustomer')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'aadharImage' },  { name: 'profileImage' }]),
