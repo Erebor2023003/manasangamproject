@@ -60,18 +60,18 @@ export class AppuService {
   async getCustomerAppuDetailsBySangham(req: appuDetailsDto) {
     try {
       const getList = await this.appuDetailsModel.find({
-        sanghamId: req.sanghamId,
+        $and: [{sanghamId: req.sanghamId},{customerId: req.customerId}]
       });
       if (getList.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: 'List of Appu Details By Sangham',
+          message: 'Appu Details of Customer',
           data: getList,
         };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: 'List of Appu Details not Found',
+          message: 'Appu Details not Found',
         };
       }
     } catch (error) {
