@@ -145,22 +145,22 @@ export class CustomerService {
           message: "Customer not Found",
         }
       } else {
-        if(req.aadharImage || req.profileImage) {
-          if (image) {
-            if (image.aadharImage && image.aadharImage[0]) {
-              const attachmentFile = await this.sharedService.saveFile(
-                image.aadharImage[0],
-              );
-              req.aadharImage = attachmentFile;
-            }
-            if (image.profileImage && image.profileImage[0]) {
-              const attachmentFile = await this.sharedService.saveFile(
-                image.profileImage[0],
-              );
-  
-              req.profileImage = attachmentFile;
-            }
+        if (image) {
+          if (image.aadharImage && image.aadharImage[0]) {
+            const attachmentFile = await this.sharedService.saveFile(
+              image.aadharImage[0],
+            );
+            req.aadharImage = attachmentFile;
           }
+          if (image.profileImage && image.profileImage[0]) {
+            const attachmentFile = await this.sharedService.saveFile(
+              image.profileImage[0],
+            );
+
+            req.profileImage = attachmentFile;
+          }
+        }
+        if(req.aadharImage || req.profileImage) {
 
           const updateCustomer = await this.customerModel.updateOne({customerId: req.customerId},{
             $set: {
@@ -247,6 +247,12 @@ export class CustomerService {
           message: "Customer not Found",
         }
       } else {
+        if(findCustomer.status === CustomerStatus.ACTIVE) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: "Customer not blocked",
+          }
+        }
         const changeStatus = await this.customerModel.updateOne({customerId: req.customerId},{
           $set: {
             status: CustomerStatus.ACTIVE

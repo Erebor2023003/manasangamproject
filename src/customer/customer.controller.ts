@@ -55,11 +55,40 @@ export class CustomerController {
     }
   }
 
+  @Post('/updatecustomer')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'aadharImage' },  { name: 'profileImage' }]),
+  )
+  async updateCustomer(@Body() req: customerDto, @UploadedFiles() image) {
+    try{
+      const updatecustomer = await this.customerService.updateCustomer(req, image);
+      return updatecustomer
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/getcustomerdetails')
   async getCustomerDetailsById(@Body() req: customerDto) {
     try{
       const getdetails = await this.customerService.getCustomerDetailsById(req);
       return getdetails
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/unblockcustomer')
+  async unblockCustomer(@Body() req: customerDto) {
+    try{
+      const unblockcustomer = await this.customerService.unblockCustomer(req);
+      return unblockcustomer
     } catch(error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
