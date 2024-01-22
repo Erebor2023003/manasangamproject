@@ -131,6 +131,12 @@ export class SanghamdepositsService {
       const findSanghamDetails = await this.sanghamDepositDetailsModel.findOne({
         sanghamId: req.sanghamId,
       });
+      if(!findSanghamDetails) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Didn't found sanghamDeposit Details."
+        }
+      }
       const dateString = findSanghamDetails.depositDate;
       const [day, month, year] = dateString.split('-');
       const numericYear = parseInt(year, 10);
