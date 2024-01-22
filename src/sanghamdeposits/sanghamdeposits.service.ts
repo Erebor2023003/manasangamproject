@@ -493,13 +493,13 @@ export class SanghamdepositsService {
       if (findSanghamDeposits.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: 'List of sangham deposits',
+          message: 'List of sangham withdraws',
           data: findSanghamDeposits,
         };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: 'Sangham Deposits Not Found',
+          message: 'Sangham Withdraws Not Found',
         };
       }
     } catch (error) {
