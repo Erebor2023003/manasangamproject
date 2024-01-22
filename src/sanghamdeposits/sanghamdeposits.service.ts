@@ -79,7 +79,7 @@ export class SanghamdepositsService {
   async getSanghamDetailsbyId(req: sanghamdepositDetailsDto) {
     try {
       const addSanghamDetails = await this.sanghamDepositDetailsModel.findOne({
-        sanghamdepositDetailsId: req.sanghamdepositDetailsId,
+        sanghamId: req.sanghamId,
       });
       if (addSanghamDetails) {
         return {
