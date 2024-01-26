@@ -136,6 +136,7 @@ export class AgentService {
   async agentsList() {
     try {
       const list = await this.agentModel.find();
+      const count = await this.agentModel.find().count();
       if (list.length > 0) {
         return {
           statusCode: HttpStatus.OK,
@@ -654,10 +655,12 @@ export class AgentService {
           },
         },
       ]);
+      const count = await this.sanghamModel.find().count();
       if (sanghams.length > 0) {
         return {
           statusCode: HttpStatus.OK,
           message: 'List of All sanghams',
+          count: count,
           data: sanghams,
         };
       } else {
@@ -686,10 +689,12 @@ export class AgentService {
           },
         },
       ]);
+      const count = await this.customerModel.find().count();
       if (customers.length > 0) {
         return {
           statusCode: HttpStatus.OK,
           message: 'List of All Customers',
+          count: count,
           data: customers,
         };
       } else {
