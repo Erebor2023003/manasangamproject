@@ -141,6 +141,7 @@ export class AgentService {
         return {
           statusCode: HttpStatus.OK,
           message: 'List of Agents',
+          count: count,
           data: list,
         };
       } else if (list.length === 0) {
