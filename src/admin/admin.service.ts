@@ -113,6 +113,40 @@ export class AdminService {
     }
   }
 
+  async updateAdmin(req: adminDto) {
+    try {
+      const findAdmin = await this.adminModel.findOne({ emailId: req.emailId });
+
+      if (findAdmin) {
+        const updateAdmin = await this.adminModel.updateOne(
+          { emailId: req.emailId },
+          {
+            $set: {
+              emailId: req.emailId,
+              password: req.password,
+            },
+          },
+        );
+
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Updated Succesfully',
+          data: updateAdmin,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Invalid Request',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
   async addpodupuDetails(req: podupuDetailsDto) {
     try {
       const findCustomer = await this.podupudetailsModel.findOne({
@@ -178,17 +212,17 @@ export class AdminService {
   async getPodhupuDetailsbyid(req: podupuDetailsDto) {
     try {
       const getDetails = await this.podupudetailsModel.aggregate([
-        {$match: {sanghamId: req.sanghamId}},
+        { $match: { sanghamId: req.sanghamId } },
         {
           $lookup: {
-            from: "sanghams",
-            localField: "sanghamId",
-            foreignField: "sanghamId",
-            as: "sanghamId"
-          }
-        }
+            from: 'sanghams',
+            localField: 'sanghamId',
+            foreignField: 'sanghamId',
+            as: 'sanghamId',
+          },
+        },
       ]);
-      if (getDetails.length>0) {
+      if (getDetails.length > 0) {
         return {
           statusCode: HttpStatus.OK,
           message: 'PodupuDetails of a Sangham',
@@ -217,8 +251,8 @@ export class AdminService {
         const findPodhuDetails = await this.podupudetailsModel.findOne({
           sanghamId: customerRecord.sanghamId,
         });
-        console.log("findPodhuDetails",findPodhuDetails)
-        if(!findPodhuDetails) {
+        console.log('findPodhuDetails', findPodhuDetails);
+        if (!findPodhuDetails) {
           continue;
         }
         const dateString = findPodhuDetails.startDate;
@@ -229,12 +263,12 @@ export class AdminService {
         const depositDate = new Date(
           Date.UTC(numericYear, numericMonth - 1, +day),
         );
-        console.log("depositDate",depositDate);
+        console.log('depositDate', depositDate);
         const podhupuDate = new Date();
         podhupuDate.setDate(depositDate.getDate());
         podhupuDate.setMonth(currentDate.getMonth());
         podhupuDate.setFullYear(currentDate.getFullYear());
-        console.log("podhupuDate",podhupuDate);
+        console.log('podhupuDate', podhupuDate);
         if (
           podhupuDate.getDate() === currentDate.getDate() &&
           podhupuDate.getMonth() === currentDate.getMonth() &&
@@ -346,31 +380,38 @@ export class AdminService {
       const podupuextraDay = new Date(podupuonedayLater);
       podupuextraDay.setMonth(currentDate.getMonth());
       podupuextraDay.setFullYear(currentDate.getFullYear());
-      console.log("podupuextraDay",podupuextraDay);
+      console.log('podupuextraDay', podupuextraDay);
       if (
         podupuDate.getDate() === currentDate.getDate() ||
         podupuextraDay.getDate() === currentDate.getDate()
       ) {
-        const findPodhupu = await this.podupuModel.find({
-          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
-        }).sort({createdAt: -1});
+        const findPodhupu = await this.podupuModel
+          .find({
+            $and: [
+              { sanghamId: req.sanghamId },
+              { customerId: req.customerId },
+            ],
+          })
+          .sort({ createdAt: -1 });
         const parsepodupurecordDate = new Date(findPodhupu[0].date);
-        console.log("parsepodupurecordDate",parsepodupurecordDate);
+        console.log('parsepodupurecordDate', parsepodupurecordDate);
         console.log(
           podupuextraDay.getDate() === currentDate.getDate() &&
             podupuextraDay.getMonth() === currentDate.getMonth() &&
             podupuextraDay.getFullYear() === currentDate.getFullYear(),
         );
         console.log(podupuDate.getDate() === currentDate.getDate());
-        console.log("podupuDate",podupuDate);
-        console.log("podupuextraDay",podupuextraDay);
-        console.log("currentDate", currentDate);
+        console.log('podupuDate', podupuDate);
+        console.log('podupuextraDay', podupuextraDay);
+        console.log('currentDate', currentDate);
         console.log(parsepodupurecordDate.getDate() === podupuDate.getDate());
-        console.log(podupuextraDay.getDate() === currentDate.getDate() &&
-        podupuextraDay.getMonth() === currentDate.getMonth() &&
-        podupuextraDay.getFullYear() === currentDate.getFullYear());
+        console.log(
+          podupuextraDay.getDate() === currentDate.getDate() &&
+            podupuextraDay.getMonth() === currentDate.getMonth() &&
+            podupuextraDay.getFullYear() === currentDate.getFullYear(),
+        );
         if (
-          (podupuDate.getDate() === currentDate.getDate()) ||
+          podupuDate.getDate() === currentDate.getDate() ||
           (podupuextraDay.getDate() === currentDate.getDate() &&
             podupuextraDay.getMonth() === currentDate.getMonth() &&
             podupuextraDay.getFullYear() === currentDate.getFullYear())
@@ -498,15 +539,18 @@ export class AdminService {
       });
       const podupuBalanceRecords = [];
       findCustomer.map((podupuRecord) => {
-        if(podupuRecord.status === "paid") {
+        if (podupuRecord.status === 'paid') {
           podupuBalanceRecords.push(podupuRecord);
         }
       });
       console.log(podupuBalanceRecords);
       if (podupuBalanceRecords.length > 0) {
-        const balance = podupuBalanceRecords.reduce((accumulator, currentValue) => {
-          return accumulator + currentValue.podhupuAmount;
-        }, 0);
+        const balance = podupuBalanceRecords.reduce(
+          (accumulator, currentValue) => {
+            return accumulator + currentValue.podhupuAmount;
+          },
+          0,
+        );
         return {
           statusCode: HttpStatus.OK,
           message: 'Total podhupu Balance of a customer',
@@ -589,28 +633,28 @@ export class AdminService {
             $and: [
               { sanghamId: req.sanghamId },
               { customerId: req.customerId },
-              { status: "paid" }
+              { status: 'paid' },
             ],
           },
         },
         {
-          $sort: {createdAt: -1}
+          $sort: { createdAt: -1 },
         },
         {
-          $limit: 1
-        }
+          $limit: 1,
+        },
       ]);
-      if(findRecentPaid.length>0) {
+      if (findRecentPaid.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: "Recent Paid Podhupu Details",
+          message: 'Recent Paid Podhupu Details',
           data: findRecentPaid,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Recent Paid Podhupu Not Found",
-        }
+          message: 'Recent Paid Podhupu Not Found',
+        };
       }
     } catch (error) {
       return {
@@ -626,7 +670,9 @@ export class AdminService {
         sanghamId: req.sanghamId,
       });
 
-      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const findProfessions = new Set(
+        podupuList.map((record) => record.customerId),
+      );
       const totalMembers = findProfessions.size;
 
       if (podupuList.length > 0) {
@@ -663,8 +709,10 @@ export class AdminService {
         if (paidList.length > 0) {
           if (!req.date) {
             const count = await this.podupuModel
-          .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }] })
-          .count();
+              .find({
+                $and: [{ sanghamId: req.sanghamId }, { status: 'paid' }],
+              })
+              .count();
             return {
               statusCode: HttpStatus.OK,
               message: 'List of paid records',
@@ -683,7 +731,7 @@ export class AdminService {
                   );
                 })
               : paidList;
-              const count = filteredpaidList.length;
+            const count = filteredpaidList.length;
             return {
               statusCode: HttpStatus.OK,
               message: 'Paid Podhupu',
@@ -718,7 +766,9 @@ export class AdminService {
         sanghamId: req.sanghamId,
       });
 
-      const findProfessions = new Set(podupuList.map(record => record.customerId));
+      const findProfessions = new Set(
+        podupuList.map((record) => record.customerId),
+      );
       const totalMembers = findProfessions.size;
 
       if (podupuList.length > 0) {
@@ -755,8 +805,10 @@ export class AdminService {
         if (paidList.length > 0) {
           if (!req.date) {
             const count = await this.podupuModel
-            .find({ $and: [{ sanghamId: req.sanghamId }, { status: 'unpaid' }] })
-            .count();  
+              .find({
+                $and: [{ sanghamId: req.sanghamId }, { status: 'unpaid' }],
+              })
+              .count();
             return {
               statusCode: HttpStatus.OK,
               message: 'List of paid records',
@@ -775,7 +827,7 @@ export class AdminService {
                   );
                 })
               : paidList;
-                const count = filteredpaidList.length;
+            const count = filteredpaidList.length;
             return {
               statusCode: HttpStatus.OK,
               message: 'Unpaid Podhupus',
@@ -926,8 +978,8 @@ export class AdminService {
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Deposit Details of Sangham not found"
-        }
+          message: 'Deposit Details of Sangham not found',
+        };
       }
     } catch (error) {
       return {
