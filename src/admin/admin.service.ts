@@ -116,29 +116,23 @@ export class AdminService {
   async updateAdmin(req: adminDto) {
     try {
       const findAdmin = await this.adminModel.findOne({ emailId: req.emailId });
-
-      if (findAdmin) {
-        const updateAdmin = await this.adminModel.updateOne(
-          { emailId: req.emailId },
-          {
-            $set: {
-              emailId: req.emailId,
-              password: req.password,
-            },
+      let passwords = findAdmin.password;
+      const bcryptPassword = await this.authService.hashPassword(req.password);
+      const updateAdmin = await this.adminModel.updateOne(
+        { password: passwords },
+        {
+          $set: {
+            emailId: req.emailId,
+            password: bcryptPassword,
           },
-        );
+        },
+      );
 
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'Updated Succesfully',
-          data: updateAdmin,
-        };
-      } else {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: 'Invalid Request',
-        };
-      }
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Updated Succesfully',
+        data: updateAdmin,
+      };
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
