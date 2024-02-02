@@ -15,9 +15,13 @@ import { SanghamdepositsModule } from './sanghamdeposits/sanghamdeposits.module'
 import { AppuModule } from './appu/appu.module';
 
 @Module({
-  imports: [AdminModule, AgentModule, CustomerModule,AuthModule,
+  imports: [
+    AdminModule,
+    AgentModule,
+    CustomerModule,
+    AuthModule,
     MongooseModule.forRoot(
-      'mongodb+srv://macsof:macsof@nextlevelcarwash.yjs3i.mongodb.net/sangham?retryWrites=true&w=majority',
+      'mongodb://goridesksk:Shiva5230@13.234.247.156:27017/sangham?authSource=admin',
     ),
     ConfigModule.forRoot(),
     JwtModule.registerAsync({
@@ -28,18 +32,21 @@ import { AppuModule } from './appu/appu.module';
         },
       }),
     }),
-    
+
     ScheduleModule.forRoot(),
-    
+
     SanghamdepositsModule,
-    
-    AppuModule
+
+    AppuModule,
   ],
   controllers: [AppController],
-  providers: [AppService,{
-    provide: APP_GUARD,
-    useClass: RolesGuard,
-  },
-  JwtService,],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+    JwtService,
+  ],
 })
 export class AppModule {}

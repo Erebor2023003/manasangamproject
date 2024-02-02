@@ -13,6 +13,7 @@ import { every } from 'rxjs';
 import { sanghamDto } from 'src/agent/dto/sangham.dto';
 import { customerDto } from 'src/customer/dto/customer.dto';
 import { AppuStatus, CustomerStatus } from 'src/auth/guards/roles.enum';
+import { interest } from './schema/interest.schema';
 
 @Injectable()
 export class AppuService {
@@ -22,6 +23,7 @@ export class AppuService {
     private readonly appuDetailsModel: Model<AppuDetails>,
     @InjectModel(Surety.name) private readonly suretyModel: Model<Surety>,
     @InjectModel(Customer.name) private readonly customerModel: Model<Customer>,
+    @InjectModel(interest.name) private readonly interestModel: Model<interest>,
   ) {}
 
   async addappuDetails(req: appuDetailsDto) {
@@ -60,7 +62,7 @@ export class AppuService {
   async getCustomerAppuDetailsBySangham(req: appuDetailsDto) {
     try {
       const getList = await this.appuDetailsModel.find({
-        $and: [{sanghamId: req.sanghamId},{customerId: req.customerId}]
+        $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
       });
       if (getList.length > 0) {
         return {
@@ -1299,6 +1301,29 @@ export class AppuService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: 'Invalid Request',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async addInterest(req) {
+    try {
+      const interestRate = await this.interestModel.create(req);
+      if (interestRate) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Interest added successfully',
+          data: interestRate,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'send request properly',
         };
       }
     } catch (error) {
