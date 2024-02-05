@@ -1314,6 +1314,13 @@ export class AppuService {
 
   async addInterest(req: interestDto) {
     try {
+      const findInterests = await this.interestModel.find();
+      if(findInterests.length>=1)  {
+        return {
+          statuscode: HttpStatus.BAD_REQUEST,
+          message: "Interest already added",
+        }
+      }
       const interestRate = await this.interestModel.create(req);
       if (interestRate) {
         return {
