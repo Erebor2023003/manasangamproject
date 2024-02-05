@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class interestDto {
   @ApiProperty()
-  interestId: number;
+  interestId: string;
   @ApiProperty()
-  interest: string;
+  interest: number;
 }

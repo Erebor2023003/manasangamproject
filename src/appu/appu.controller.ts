@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
   Post,
   UploadedFiles,
@@ -243,6 +244,45 @@ export class AppuController {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  @Get('/getinterestlist')
+  async getInterestlist() {
+    try{
+      const getlist = await this.appuService.getInterestlist();
+      return getlist
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error
+      }
+    }
+  }
+
+  @Post('/getinterestbyid')
+  async getInterestById(@Body() req: interestDto) {
+    try{
+      const getlist = await this.appuService.getInterestbyid(req);
+      return getlist
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error
+      }
+    }
+  }
+
+  @Post("/updateinterest")
+  async updateInterest(@Body() req: interestDto) {
+    try{
+      const moderateinterest = await this.appuService.updateInterestById(req);
+      return moderateinterest
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error
+      }
     }
   }
 }

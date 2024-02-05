@@ -14,6 +14,7 @@ import { sanghamDto } from 'src/agent/dto/sangham.dto';
 import { customerDto } from 'src/customer/dto/customer.dto';
 import { AppuStatus, CustomerStatus } from 'src/auth/guards/roles.enum';
 import { interest } from './schema/interest.schema';
+import { interestDto } from './dto/interest.dto';
 
 @Injectable()
 export class AppuService {
@@ -1311,7 +1312,7 @@ export class AppuService {
     }
   }
 
-  async addInterest(req) {
+  async addInterest(req: interestDto) {
     try {
       const interestRate = await this.interestModel.create(req);
       if (interestRate) {
@@ -1331,6 +1332,79 @@ export class AppuService {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  async getInterestlist() {
+    try{
+      const getlist = await this.interestModel.find();
+      if(getlist.length > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "list of interests",
+          data: getlist,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Didn't found interests list",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error
+      }
+    }
+  }
+
+  async getInterestbyid(req: interestDto) {
+    try{
+      const getinterest = await this.interestModel.findOne({interestId: req.interestId});
+      if(getinterest) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Interest Details",
+          data: getinterest,
+        }
+      } else {
+        return{
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Interest not found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.OK,
+        message: error,
+      }
+    }
+  }
+
+  async updateInterestById(req: interestDto) {
+    try{
+      const moderate = await this.interestModel.updateOne({interestId: req.interestId}, {
+        $set: {
+          interest: req.interest
+        }
+      });
+      if(moderate) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Interest updated successfully",
+          data: moderate
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Invalid Request",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
     }
   }
 }
