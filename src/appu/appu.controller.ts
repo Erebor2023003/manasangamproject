@@ -35,7 +35,7 @@ export class AppuController {
     }
   }
 
-  @Post('/getcustomerappudetails')
+  @Post('/getcustomerappudetailsbysangham')
   async getCustomerAppuDetailsBySangham(@Body() req: appuDetailsDto) {
     try {
       const details = await this.appuService.getCustomerAppuDetailsBySangham(
