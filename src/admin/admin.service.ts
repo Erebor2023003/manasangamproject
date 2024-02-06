@@ -241,6 +241,7 @@ export class AdminService {
       const customers = await this.customerModel.find();
       // console.log("customers",customers);
       const currentDate = new Date();
+      let createdRecords: any = [];
       for (const customerRecord of customers) {
         const findPodhuDetails = await this.podupudetailsModel.findOne({
           sanghamId: customerRecord.sanghamId,
@@ -248,107 +249,118 @@ export class AdminService {
         console.log('findPodhuDetails', findPodhuDetails);
         if (!findPodhuDetails) {
           continue;
-        }
-        const dateString = findPodhuDetails.startDate;
-        const [day, month, year] = dateString.split('-');
-        const numericYear = parseInt(year, 10);
-        const numericMonth = parseInt(month, 10);
-
-        const depositDate = new Date(
-          Date.UTC(numericYear, numericMonth - 1, +day),
-        );
-        console.log('depositDate', depositDate);
-        const podhupuDate = new Date();
-        podhupuDate.setDate(depositDate.getDate());
-        podhupuDate.setMonth(currentDate.getMonth());
-        podhupuDate.setFullYear(currentDate.getFullYear());
-        console.log('podhupuDate', podhupuDate);
-        if (
-          podhupuDate.getDate() === currentDate.getDate() &&
-          podhupuDate.getMonth() === currentDate.getMonth() &&
-          podhupuDate.getFullYear() === currentDate.getFullYear()
-        ) {
-          const lastMonthRecords = await this.podupuModel
-            .find({
-              $and: [
-                { sanghamId: customerRecord.sanghamId },
-                { customerId: customerRecord.customerId },
-              ],
-            })
-            .sort({ createdAt: -1 });
-          if (lastMonthRecords.length > 0) {
-            const parseLastMonthRecordDate = new Date(lastMonthRecords[0].date);
-            console.log(parseLastMonthRecordDate);
-            if (
-              parseLastMonthRecordDate.getDate() === currentDate.getDate() &&
-              parseLastMonthRecordDate.getMonth() === currentDate.getMonth() &&
-              parseLastMonthRecordDate.getFullYear() ===
-                currentDate.getFullYear()
-            ) {
-              return {
-                statusCode: HttpStatus.BAD_REQUEST,
-                message: 'Podhupu Already created',
-              };
-            }
-            let fine;
-            let totalInterest;
-            let Total;
-            if (
-              parseLastMonthRecordDate.getDate() === currentDate.getDate() &&
-              parseLastMonthRecordDate.getMonth() ===
-                currentDate.getMonth() - 1 &&
-              parseLastMonthRecordDate.getFullYear() ===
-                currentDate.getFullYear()
-            ) {
-              totalInterest =
-                lastMonthRecords[0].interest +
-                (lastMonthRecords[0].Total * findPodhuDetails.interest) / 100;
-            } else {
-              totalInterest = 0;
-            }
-            if (lastMonthRecords[0].status === 'unpaid') {
-              fine =
-                lastMonthRecords[0].podhupuAmount *
-                (findPodhuDetails.fine / 100);
-              Total =
-                findPodhuDetails.monthlyAmount +
-                fine +
-                totalInterest +
-                lastMonthRecords[0].podhupuAmount;
-            } else {
-              fine = 0;
-              Total = findPodhuDetails.monthlyAmount + totalInterest;
-            }
-            const createPodhupuRecord = await this.podupuModel.create({
-              sanghamId: customerRecord.sanghamId,
-              customerId: customerRecord.customerId,
-              podhupuAmount: findPodhuDetails.monthlyAmount,
-              date: currentDate,
-              fine,
-              interest: totalInterest,
-              Total,
-              status: 'unpaid',
-            });
-            return createPodhupuRecord;
-          } else {
-            const createPodhupuRecord = await this.podupuModel.create({
-              sanghamId: customerRecord.sanghamId,
-              customerId: customerRecord.customerId,
-              podhupuAmount: findPodhuDetails.monthlyAmount,
-              date: currentDate,
-              fine: 0,
-              interest: 0,
-              Total: findPodhuDetails.monthlyAmount,
-              status: 'unpaid',
-            });
-
-            return createPodhupuRecord;
-          }
         } else {
-          // return `records can't be created`;
-          continue;
+          const dateString = findPodhuDetails.startDate;
+          const [day, month, year] = dateString.split('-');
+          const numericYear = parseInt(year, 10);
+          const numericMonth = parseInt(month, 10);
+
+          const depositDate = new Date(
+            Date.UTC(numericYear, numericMonth - 1, +day),
+          );
+          console.log('depositDate', depositDate);
+          const podhupuDate = new Date();
+          podhupuDate.setDate(depositDate.getDate());
+          podhupuDate.setMonth(currentDate.getMonth());
+          podhupuDate.setFullYear(currentDate.getFullYear());
+          console.log('podhupuDate', podhupuDate);
+          if (
+            podhupuDate.getDate() === currentDate.getDate() &&
+            podhupuDate.getMonth() === currentDate.getMonth() &&
+            podhupuDate.getFullYear() === currentDate.getFullYear()
+          ) {
+            const lastMonthRecords = await this.podupuModel
+              .find({
+                $and: [
+                  { sanghamId: customerRecord.sanghamId },
+                  { customerId: customerRecord.customerId },
+                ],
+              })
+              .sort({ createdAt: -1 });
+            if (lastMonthRecords.length > 0) {
+              const parseLastMonthRecordDate = new Date(
+                lastMonthRecords[0].date,
+              );
+              console.log(parseLastMonthRecordDate);
+              if (
+                parseLastMonthRecordDate.getDate() === currentDate.getDate() &&
+                parseLastMonthRecordDate.getMonth() ===
+                  currentDate.getMonth() &&
+                parseLastMonthRecordDate.getFullYear() ===
+                  currentDate.getFullYear()
+              ) {
+                return {
+                  statusCode: HttpStatus.BAD_REQUEST,
+                  message: 'Podhupu Already created',
+                };
+              }
+              let fine;
+              let totalInterest;
+              let Total;
+              if (
+                parseLastMonthRecordDate.getDate() === currentDate.getDate() &&
+                parseLastMonthRecordDate.getMonth() ===
+                  currentDate.getMonth() - 1 &&
+                parseLastMonthRecordDate.getFullYear() ===
+                  currentDate.getFullYear()
+              ) {
+                totalInterest =
+                  lastMonthRecords[0].interest +
+                  (lastMonthRecords[0].Total * findPodhuDetails.interest) / 100;
+              } else {
+                totalInterest = 0;
+              }
+              if (lastMonthRecords[0].status === 'unpaid') {
+                fine =
+                  lastMonthRecords[0].podhupuAmount *
+                  (findPodhuDetails.fine / 100);
+                Total =
+                  findPodhuDetails.monthlyAmount +
+                  fine +
+                  totalInterest +
+                  lastMonthRecords[0].podhupuAmount;
+              } else {
+                fine = 0;
+                Total = findPodhuDetails.monthlyAmount + totalInterest;
+              }
+              const createPodhupuRecord = await this.podupuModel.create({
+                sanghamId: customerRecord.sanghamId,
+                customerId: customerRecord.customerId,
+                podhupuAmount: findPodhuDetails.monthlyAmount,
+                date: currentDate,
+                fine,
+                interest: totalInterest,
+                Total,
+                status: 'unpaid',
+              });
+              if (createPodhupuRecord) {
+                createdRecords.push(createPodhupuRecord);
+                continue;
+              }
+            } else {
+              const createPodhupuRecord = await this.podupuModel.create({
+                sanghamId: customerRecord.sanghamId,
+                customerId: customerRecord.customerId,
+                podhupuAmount: findPodhuDetails.monthlyAmount,
+                date: currentDate,
+                fine: 0,
+                interest: 0,
+                Total: findPodhuDetails.monthlyAmount,
+                status: 'unpaid',
+              });
+
+              if (createPodhupuRecord) {
+                createdRecords.push(createPodhupuRecord);
+                continue;
+              }
+            }
+          } else {
+            // return `records can't be created`;
+            continue;
+          }
         }
       }
+      return createdRecords;
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1164,6 +1176,7 @@ export class AdminService {
       // Create a map to store aggregated deposit amounts for each sanghamId and date
       const aggregatedDeposits = new Map();
 
+      let createdRecords: any = [];
       for (const deposit of findDeposits) {
         const findDetails = await this.depositdetailsModel.findOne({
           sanghamId: deposit.sanghamId,
@@ -1308,7 +1321,10 @@ export class AdminService {
             total,
           });
           console.log(`Record created for ${depositRecord.date}`);
-          return createDeposit;
+          if (createDeposit) {
+            createdRecords.push(createDeposit);
+            continue;
+          }
           // Add interest for the previous month
           // Your logic to calculate interest and update depositDetails goes here
           // ...
@@ -1322,6 +1338,7 @@ export class AdminService {
       //   statusCode: HttpStatus.OK,
       //   message: 'Cron job executed successfully',
       // };
+      return createdRecords;
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1621,10 +1638,22 @@ export class AdminService {
               const withdrawDetails = await this.withdrawModel.findOne({
                 withdrawId: withdrawing.withdrawId,
               });
+              const depositDetails = await this.depositModel.find({
+                customerId: req.customerId,
+              });
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Withdraw Successfull',
-                data: withdrawDetails,
+                data: {
+                  amount: withdrawDetails.amount,
+                  sanghamId: withdrawDetails.sanghamId,
+                  customerId: withdrawDetails.customerId,
+                  date: withdrawDetails.date,
+                  total: withdrawDetails.total,
+                  withdrawId: withdrawDetails.withdrawId,
+                  depositAmount: depositDetails[0].depositAmount,
+                  interest: findDeposits[0].interest,
+                },
               };
             } else {
               return {
@@ -1665,10 +1694,22 @@ export class AdminService {
             const withdrawDetails = await this.withdrawModel.findOne({
               withdrawId: withdrawing.withdrawId,
             });
+            const depositDetails = await this.depositModel.find({
+              customerId: req.customerId,
+            });
             return {
               statusCode: HttpStatus.OK,
               message: 'Withdraw Successfull',
-              data: withdrawDetails,
+              data: {
+                amount: withdrawDetails.amount,
+                sanghamId: withdrawDetails.sanghamId,
+                customerId: withdrawDetails.customerId,
+                date: withdrawDetails.date,
+                total: withdrawDetails.total,
+                withdrawId: withdrawDetails.withdrawId,
+                depositAmount: depositDetails[0].depositAmount,
+                interest: findDeposits[0].interest,
+              },
             };
           } else {
             return {

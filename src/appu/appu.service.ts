@@ -636,15 +636,18 @@ export class AppuService {
               // Update the depositAmount for the current sanghamId and formattedDate
               aggregatedDeposits.get(
                 deposit.sanghamId + formattedDate,
-              ).appuAmount += deposit.appuAmount;
+              ).appuAmount = deposit.appuAmount;
             } else {
-              return `Record can be created only on ${monthDate.getDate()} on every month.`;
+              // return `Record can be created only on ${monthDate.getDate()} on every month.`;
+              continue;
             }
           }
         } else {
-          return 'No records are approved';
+          continue;
+          // return 'No records are approved';
         }
       }
+      let createdRecords: any = [];
       for (const depositRecord of aggregatedDeposits.values()) {
         console.log('depositRecord', depositRecord);
         const existingDepositDetails = await this.appuDetailsModel.findOne({
@@ -681,10 +684,11 @@ export class AppuService {
             findDepositDate.getMonth() === saveFormattedDate.getMonth() &&
             findDepositDate.getFullYear() === saveFormattedDate.getFullYear()
           ) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Appu has been paid on this day',
-            };
+            // return {
+            //   statusCode: HttpStatus.BAD_REQUEST,
+            //   message: 'Appu has been paid on this day',
+            // };
+            continue;
           }
           const lastMonthRecord = await this.appuModel
             .find({
@@ -694,7 +698,8 @@ export class AppuService {
             })
             .sort({ createdAt: -1 });
           if (lastMonthRecord[0].total === 0) {
-            return 'Record will be create when the Appu is added';
+            // return 'Record will be create when the Appu is added';
+            continue;
           }
           const findCustomerAppu = await this.appuDetailsModel.findOne({
             $and: [
@@ -734,7 +739,11 @@ export class AppuService {
           });
 
           console.log(`Record created for ${depositRecord.date}`);
-          return addAppuRecord;
+          if(addAppuRecord) {
+            createdRecords.push(addAppuRecord);
+            continue;
+          }
+          // return addAppuRecord;
           // Add interest for the previous month
           // Your logic to calculate interest and update depositDetails goes here
           // ...
@@ -742,6 +751,7 @@ export class AppuService {
           console.log(`Record already exists for ${depositRecord.date}`);
         }
       }
+      return createdRecords
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

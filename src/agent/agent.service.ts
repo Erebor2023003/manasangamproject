@@ -337,7 +337,7 @@ export class AgentService {
         }
       } else {
         const alphabeticPart = await this.findNextAvailableAlphabet();
-        console.log("alphabeticPart",alphabeticPart);
+        console.log('alphabeticPart', alphabeticPart);
         const numericPart = this.agentSanghamMap[req.agentId];
 
         const sanghamNumber = numericPart.toString().padStart(2, '0');
@@ -573,13 +573,32 @@ export class AgentService {
       });
       let totalAmount = 0;
       if (balance.length > 0) {
-        // Use reduce to sum up podhupuAmount and fine
-        totalAmount = balance.reduce((acc, current) => {
-          const podhupuAmount = current.depositAmount || 0;
-          const fine = current.interest || 0;
-          return acc + podhupuAmount + fine;
-        }, 0);
+        const firstIndexedTotals = {};
+
+      balance.forEach((record) => {
+        const customerId = record.customerId; // Assuming there's a customerId field
+
+        // Check if this is the first indexed record for the customer
+        if (!firstIndexedTotals[customerId]) {
+          // If it is, store its total
+          firstIndexedTotals[customerId] = record.total || 0;
+        }
+      });
+
+      // Sum up the first indexed totals for all customers
+      const totalFirstIndexed:any = Object.values(firstIndexedTotals).reduce(
+        (acc:number, total:number) => acc + total,
+        0,
+      );
+      totalAmount = totalFirstIndexed
+      //   // Use reduce to sum up podhupuAmount and fine
+      //   totalAmount = balance.reduce((acc, current) => {
+      //     const podhupuAmount = current.depositAmount || 0;
+      //     const fine = current.interest || 0;
+      //     return acc + podhupuAmount + fine;
+      //   }, 0);
       }
+      
       const sanghamdepositbalance = await this.sanghamDepositModel.find({
         sanghamId: req.sanghamId,
       });
