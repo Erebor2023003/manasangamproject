@@ -397,9 +397,13 @@ export class AppuService {
                 appuStartDate,
                 "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
               );
+              const timeString = req.timePeriod.toString();
+              const timeNumber = parseInt(timeString)
               const dueDate = new Date();
               dueDate.setDate(appuStartDate.getDate());
-              dueDate.setMonth(currentDate.getMonth() + req.timePeriod);
+              dueDate.setMonth(currentDate.getMonth() + parseInt(timeString));
+
+              console.log(".......dueDate",dueDate);
               const formattedDueDate = format(
                 dueDate,
                 "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
@@ -466,10 +470,13 @@ export class AppuService {
             const dueDate = new Date();
             dueDate.setDate(appuStartDate.getDate());
             dueDate.setMonth(currentDate.getMonth() + req.timePeriod);
+
+            console.log("....dueDate", dueDate);
             const formattedDueDate = format(
               dueDate,
               "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
             );
+            console.log(".....formattedDate", formattedDueDate);
             const addAppu = await this.appuModel.create({
               sanghamId: req.sanghamId,
               customerId: req.customerId,
