@@ -397,15 +397,24 @@ export class AppuService {
                 appuStartDate,
                 "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
               );
-              const dueDate = new Date();
-              dueDate.setDate(appuStartDate.getDate());
-              dueDate.setMonth(currentDate.getMonth() + req.timePeriod);
+              // const dueDate = new Date();
+              // dueDate.setDate(appuStartDate.getDate());
+              // dueDate.setMonth(currentDate.getMonth() + req.timePeriod);
 
-              console.log(".......dueDate",dueDate);
+              console.log('.......dueDate', req.dueDate);
+              const duedateString = req.dueDate;
+              const [dueday, duemonth, dueyear] = duedateString.split('-');
+              const duenumericYear = parseInt(dueyear, 10);
+              const duenumericMonth = parseInt(duemonth, 10);
+              const dueparsedDate = new Date(
+                Date.UTC(duenumericYear, duenumericMonth - 1, +dueday),
+              );
+              console.log(".....dueparsedDate", dueparsedDate)
               const formattedDueDate = format(
-                dueDate,
+                dueparsedDate,
                 "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
               );
+              
               const addAppu = await this.appuModel.create({
                 sanghamId: req.sanghamId,
                 customerId: req.customerId,
@@ -465,16 +474,26 @@ export class AppuService {
               appuStartDate,
               "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
             );
-            const dueDate = new Date();
-            dueDate.setDate(appuStartDate.getDate());
-            dueDate.setMonth(currentDate.getMonth() + req.timePeriod);
+            // const dueDate = new Date();
+            // dueDate.setDate(appuStartDate.getDate());
+            // dueDate.setMonth(currentDate.getMonth() + req.timePeriod);
 
-            console.log("....dueDate", dueDate);
+
+            // console.log('....dueDate', req.dueDate);
+            console.log('.......dueDate', req.dueDate);
+              const duedateString = req.dueDate;
+              const [dueday, duemonth, dueyear] = duedateString.split('-');
+              const duenumericYear = parseInt(dueyear, 10);
+              const duenumericMonth = parseInt(duemonth, 10);
+              const dueparsedDate = new Date(
+                Date.UTC(duenumericYear, duenumericMonth - 1, +dueday),
+              );
             const formattedDueDate = format(
-              dueDate,
+              dueparsedDate,
               "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
             );
-            console.log(".....formattedDate", formattedDueDate);
+            console.log(".....dueparsedDate", dueparsedDate)
+            console.log('.....formattedDate', formattedDueDate);
             const addAppu = await this.appuModel.create({
               sanghamId: req.sanghamId,
               customerId: req.customerId,
