@@ -512,7 +512,8 @@ export class AppuService {
         customerId: req.customerId,
       });
       if (findCustomer) {
-        if (req.otp === 1234) {
+        let otp_string = req.otp.toString()
+        if (otp_string === "1234") {
           const findAppus = await this.appuModel
             .find({
               $and: [
