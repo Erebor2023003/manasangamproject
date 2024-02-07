@@ -506,13 +506,13 @@ export class AppuService {
     }
   }
 
-  async approveAppu(req: customerDto) {
+  async approveAppu(req: appuDto) {
     try {
       const findCustomer = await this.customerModel.findOne({
         customerId: req.customerId,
       });
       if (findCustomer) {
-        if (req.otp === 1234) {
+        if (req.otp === "1234") {
           const findAppus = await this.appuModel
             .find({
               $and: [

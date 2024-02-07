@@ -29,4 +29,6 @@ export class appuDto{
     approveStatus: string
     @ApiProperty()
     customerName: string
+    @ApiProperty()
+    otp: string
 }
