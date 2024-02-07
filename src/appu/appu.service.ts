@@ -133,7 +133,20 @@ export class AppuService {
           return {
             statusCode: HttpStatus.OK,
             message: 'Appu Details of customer',
-            data: details,
+            data: [
+              {
+                appuDate: details[0].appuDate,
+                sanghamId: details[0].sanghamId,
+                interest: details[0].interest,
+                timePeriod: findAppus[0].timePeriod,
+                customerId: details[0].customerId,
+                fine: details[0].fine,
+                appuDetailsId: details[0].appuDetailsId,
+                appuAmount: details[0].appuAmount,
+                dueDate: details[0].dueDate,
+                surety: details[0].surety,
+              },
+            ],
           };
         } else {
           return {
@@ -512,8 +525,8 @@ export class AppuService {
         customerId: req.customerId,
       });
       if (findCustomer) {
-        let otp_string = req.otp.toString()
-        if (otp_string === "1234") {
+        let otp_string = req.otp.toString();
+        if (otp_string === '1234') {
           const findAppus = await this.appuModel
             .find({
               $and: [
@@ -740,7 +753,7 @@ export class AppuService {
           });
 
           console.log(`Record created for ${depositRecord.date}`);
-          if(addAppuRecord) {
+          if (addAppuRecord) {
             createdRecords.push(addAppuRecord);
             continue;
           }
@@ -752,7 +765,7 @@ export class AppuService {
           console.log(`Record already exists for ${depositRecord.date}`);
         }
       }
-      return createdRecords
+      return createdRecords;
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1326,11 +1339,11 @@ export class AppuService {
   async addInterest(req: interestDto) {
     try {
       const findInterests = await this.interestModel.find();
-      if(findInterests.length>=1)  {
+      if (findInterests.length >= 1) {
         return {
           statuscode: HttpStatus.BAD_REQUEST,
-          message: "Interest already added",
-        }
+          message: 'Interest already added',
+        };
       }
       const interestRate = await this.interestModel.create(req);
       if (interestRate) {
@@ -1354,75 +1367,80 @@ export class AppuService {
   }
 
   async getInterestlist() {
-    try{
+    try {
       const getlist = await this.interestModel.find();
-      if(getlist.length > 0) {
+      if (getlist.length > 0) {
         return {
           statusCode: HttpStatus.OK,
-          message: "list of interests",
+          message: 'list of interests',
           data: getlist,
-        }
+        };
       } else {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: "Didn't found interests list",
-        }
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: error
-      }
+        message: error,
+      };
     }
   }
 
   async getInterestbyid(req: interestDto) {
-    try{
-      const getinterest = await this.interestModel.findOne({interestId: req.interestId});
-      if(getinterest) {
+    try {
+      const getinterest = await this.interestModel.findOne({
+        interestId: req.interestId,
+      });
+      if (getinterest) {
         return {
           statusCode: HttpStatus.OK,
-          message: "Interest Details",
+          message: 'Interest Details',
           data: getinterest,
-        }
+        };
       } else {
-        return{
+        return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Interest not found",
-        }
+          message: 'Interest not found',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.OK,
         message: error,
-      }
+      };
     }
   }
 
   async updateInterestById(req: interestDto) {
-    try{
-      const moderate = await this.interestModel.updateOne({interestId: req.interestId}, {
-        $set: {
-          interest: req.interest
-        }
-      });
-      if(moderate) {
+    try {
+      const moderate = await this.interestModel.updateOne(
+        { interestId: req.interestId },
+        {
+          $set: {
+            interest: req.interest,
+          },
+        },
+      );
+      if (moderate) {
         return {
           statusCode: HttpStatus.OK,
-          message: "Interest updated successfully",
-          data: moderate
-        }
+          message: 'Interest updated successfully',
+          data: moderate,
+        };
       } else {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: "Invalid Request",
-        }
+          message: 'Invalid Request',
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 }
