@@ -908,7 +908,7 @@ export class AppuService {
               let remainingAmount =
                 req.paidAmount - findAppu[0].interest - findAppu[0].fine;
               let grandTotal;
-              if (req.paidAmount > findAppu[0].interest + findAppu[0].fine) {
+              if (req.paidAmount >= findAppu[0].interest + findAppu[0].fine) {
                 interest = 0;
                 appuTotal = findAppu[0].appuAmount - remainingAmount;
                 fine = 0;
