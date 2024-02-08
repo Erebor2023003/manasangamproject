@@ -409,12 +409,12 @@ export class AppuService {
               const dueparsedDate = new Date(
                 Date.UTC(duenumericYear, duenumericMonth - 1, +dueday),
               );
-              console.log(".....dueparsedDate", dueparsedDate)
+              console.log('.....dueparsedDate', dueparsedDate);
               const formattedDueDate = format(
                 dueparsedDate,
                 "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
               );
-              
+
               const addAppu = await this.appuModel.create({
                 sanghamId: req.sanghamId,
                 customerId: req.customerId,
@@ -478,21 +478,20 @@ export class AppuService {
             // dueDate.setDate(appuStartDate.getDate());
             // dueDate.setMonth(currentDate.getMonth() + req.timePeriod);
 
-
             // console.log('....dueDate', req.dueDate);
             console.log('.......dueDate', req.dueDate);
-              const duedateString = req.dueDate;
-              const [dueday, duemonth, dueyear] = duedateString.split('-');
-              const duenumericYear = parseInt(dueyear, 10);
-              const duenumericMonth = parseInt(duemonth, 10);
-              const dueparsedDate = new Date(
-                Date.UTC(duenumericYear, duenumericMonth - 1, +dueday),
-              );
+            const duedateString = req.dueDate;
+            const [dueday, duemonth, dueyear] = duedateString.split('-');
+            const duenumericYear = parseInt(dueyear, 10);
+            const duenumericMonth = parseInt(duemonth, 10);
+            const dueparsedDate = new Date(
+              Date.UTC(duenumericYear, duenumericMonth - 1, +dueday),
+            );
             const formattedDueDate = format(
               dueparsedDate,
               "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
             );
-            console.log(".....dueparsedDate", dueparsedDate)
+            console.log('.....dueparsedDate', dueparsedDate);
             console.log('.....formattedDate', formattedDueDate);
             const addAppu = await this.appuModel.create({
               sanghamId: req.sanghamId,
@@ -971,7 +970,21 @@ export class AppuService {
                 return {
                   statusCode: HttpStatus.OK,
                   message: 'Appu Paid Successfully',
-                  data: findAppuRecord,
+                  data: {
+                    sanghamId: findAppuRecord.sanghamId,
+                    customerId: findAppuRecord.customerId,
+                    appuAmount: findAppu[0].appuAmount,
+                    interest: findAppu[0].interest,
+                    fine: findAppu[0].fine,
+                    paidAmount: findAppuRecord.paidAmount,
+                    total: findAppuRecord.total,
+                    date: findAppuRecord.date,
+                    timePeriod: findAppuRecord.timePeriod,
+                    appuStatus: findAppuRecord.appuStatus,
+                    dueDate: findAppuRecord.dueDate,
+                    approveStatus: findAppuRecord.approveStatus,
+                    appuId: findAppuRecord.appuId,
+                  },
                 };
               }
             } else {
