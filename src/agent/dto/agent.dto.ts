@@ -14,6 +14,8 @@ export class agentDto{
     @ApiProperty()
     aadharImage: string
     @ApiProperty()
+    aadharImage2: string
+    @ApiProperty()
     tenthmemo: string
     @ApiProperty()
     address:string

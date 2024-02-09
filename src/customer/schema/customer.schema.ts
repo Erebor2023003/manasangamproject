@@ -20,6 +20,8 @@ export class Customer extends Document{
     @Prop()
     aadharImage: string
     @Prop()
+    aadharImage2: string
+    @Prop()
     profileImage: string
     // @Prop()
     // fingerPrint: string

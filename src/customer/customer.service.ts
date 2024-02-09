@@ -31,6 +31,13 @@ export class CustomerService {
             );
             req.aadharImage = attachmentFile;
           }
+          if (image.aadharImage2 && image.aadharImage2[0]) {
+            const attachmentFile = await this.sharedService.saveFile(
+              image.aadharImage2[0],
+            );
+
+            req.aadharImage2 = attachmentFile;
+          }
           if (image.profileImage && image.profileImage[0]) {
             const attachmentFile = await this.sharedService.saveFile(
               image.profileImage[0],
@@ -151,6 +158,13 @@ export class CustomerService {
               image.aadharImage[0],
             );
             req.aadharImage = attachmentFile;
+          }
+          if (image.aadharImage2 && image.aadharImage2[0]) {
+            const attachmentFile = await this.sharedService.saveFile(
+              image.aadharImage2[0],
+            );
+
+            req.aadharImage2 = attachmentFile;
           }
           if (image.profileImage && image.profileImage[0]) {
             const attachmentFile = await this.sharedService.saveFile(

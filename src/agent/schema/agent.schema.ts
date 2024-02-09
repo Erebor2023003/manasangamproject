@@ -18,6 +18,8 @@ export class Agent extends Document{
     @Prop()
     aadharImage: string
     @Prop()
+    aadharImage2: string
+    @Prop()
     tenthmemo: string
     @Prop()
     address:string

@@ -50,6 +50,13 @@ export class AgentService {
             );
             req.aadharImage = attachmentFile;
           }
+          if (image.aadharImage2 && image.aadharImage2[0]) {
+            const attachmentFile = await this.sharedService.saveFile(
+              image.aadharImage2[0],
+            );
+
+            req.aadharImage2 = attachmentFile;
+          }
           if (image.tenthmemo && image.tenthmemo[0]) {
             const attachmentFile = await this.sharedService.saveFile(
               image.tenthmemo[0],
@@ -197,6 +204,13 @@ export class AgentService {
             image.aadharImage[0],
           );
           req.aadharImage = attachmentFile;
+        }
+        if (image.aadharImage2 && image.aadharImage2[0]) {
+          const attachmentFile = await this.sharedService.saveFile(
+            image.aadharImage2[0],
+          );
+
+          req.aadharImage2 = attachmentFile;
         }
         if (image.tenthmemo && image.tenthmemo[0]) {
           const attachmentFile = await this.sharedService.saveFile(

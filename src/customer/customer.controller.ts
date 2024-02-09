@@ -15,7 +15,7 @@ export class CustomerController {
   @Roles(Role.AGENT,Role.ADMIN)
   @Post('/addcustomer')
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'aadharImage' },  { name: 'profileImage' }]),
+    FileFieldsInterceptor([{ name: 'aadharImage' },{ name: 'aadharImage2' },  { name: 'profileImage' }]),
   )
   async addCustomer(@Body() req: customerDto,@UploadedFiles() image) {
     try{
@@ -57,7 +57,7 @@ export class CustomerController {
 
   @Post('/updatecustomer')
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'aadharImage' },  { name: 'profileImage' }]),
+    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'aadharImage2'}, { name: 'profileImage' }]),
   )
   async updateCustomer(@Body() req: customerDto, @UploadedFiles() image) {
     try{

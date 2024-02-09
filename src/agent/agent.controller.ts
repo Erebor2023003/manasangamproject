@@ -16,7 +16,7 @@ export class AgentController {
   @Roles(Role.ADMIN)
   @Post('/registerAgent')
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
+    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'aadharImage2' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
   )
   async addAgent(@Body() req: agentDto, @UploadedFiles() image) {
     try{
@@ -75,7 +75,7 @@ export class AgentController {
 
   @Post('/updateAgent')
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
+    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'aadharImage2' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
   )
   async updateAgent(@Body() req: agentDto, @UploadedFiles() image) {
     try{
