@@ -185,34 +185,6 @@ export class AppuService {
     }
   }
 
-  async updateAppuDetailsbyId(req: appuDetailsDto) {
-    try {
-      const moderate = await this.appuDetailsModel.updateOne(
-        { appuDetailsId: req.appuDetailsId },
-        {
-          $set: {
-            interest: req.interest,
-          },
-        },
-      );
-      if (moderate) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'Updated Successfully',
-        };
-      } else {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: 'Invalid Request',
-        };
-      }
-    } catch (error) {
-      return {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: error,
-      };
-    }
-  }
 
   async addSurety(req: suretyDto, image) {
     try {

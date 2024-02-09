@@ -97,7 +97,7 @@ export class CustomerController {
     }
   }
 
-  @Post('/getcustomerdetails')
+  @Post('/deletecustomer')
   async deleteCustomer(@Body() req: customerDto) {
     try{
       const getdetails = await this.customerService.deleteCustomer(req);
