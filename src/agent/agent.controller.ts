@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpStatus, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Post,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { agentDto } from './dto/agent.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -16,76 +25,86 @@ export class AgentController {
   @Roles(Role.ADMIN)
   @Post('/registerAgent')
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'aadharImage2' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
+    FileFieldsInterceptor([
+      { name: 'aadharImage' },
+      { name: 'aadharImage2' },
+      { name: 'tenthmemo' },
+      { name: 'profilePicture' },
+    ]),
   )
   async addAgent(@Body() req: agentDto, @UploadedFiles() image) {
-    try{
+    try {
       const addagent = await this.agentService.registerAgent(req, image);
-      return addagent
-    } catch(error) {
+      return addagent;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @Post('/loginagent')
   async loginAgent(@Body() req: agentDto) {
-    try{
+    try {
       const findAgent = await this.agentService.loginAgent(req);
-      return findAgent
-    } catch(error) {
+      return findAgent;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('/agentslist')
-  async getAgentsList(){
-    try{
+  async getAgentsList() {
+    try {
       const list = await this.agentService.agentsList();
-      return list
-    } catch(error) {
+      return list;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.AGENT)
   @Post('/agentbyid')
-  async getAgentById(@Body() req: agentDto){
-    try{
+  async getAgentById(@Body() req: agentDto) {
+    try {
       const agentDetails = await this.agentService.getAgentDetails(req);
-      return agentDetails
-    } catch(error) {
+      return agentDetails;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @Post('/updateAgent')
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'aadharImage' }, { name: 'aadharImage2' }, { name: 'tenthmemo' }, { name: 'profilePicture' }]),
+    FileFieldsInterceptor([
+      { name: 'aadharImage' },
+      { name: 'aadharImage2' },
+      { name: 'tenthmemo' },
+      { name: 'profilePicture' },
+    ]),
   )
   async updateAgent(@Body() req: agentDto, @UploadedFiles() image) {
-    try{
+    try {
       const moderate = await this.agentService.updateAgent(req, image);
-      return moderate
-    } catch(error) {
+      return moderate;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
@@ -93,68 +112,68 @@ export class AgentController {
   @Roles(Role.ADMIN)
   @Post('/addsangham')
   async addSangham(@Body() req: sanghamDto) {
-    try{  
-       const createsangham = await this.agentService.createSangham(req);
-       return createsangham
-    } catch(error) {
+    try {
+      const createsangham = await this.agentService.createSangham(req);
+      return createsangham;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN,Role.AGENT)
+  @Roles(Role.ADMIN, Role.AGENT)
   @Post('/getAgentSanghams')
   async getAgentSanghams(@Body() req: sanghamDto) {
-    try{
+    try {
       const getlist = await this.agentService.getSanghamsByAgentId(req);
-      return getlist
-    } catch(error) {
+      return getlist;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @Post('/getsanghambyid')
   async getSanghamById(@Body() req: sanghamDto) {
-    try{
+    try {
       const getDetails = await this.agentService.getSanghamDetails(req);
-      return getDetails
-    } catch(error) {
+      return getDetails;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @Post('/searchsanghambyname')
   async searchSanghamByName(@Body() req: sanghamDto) {
-    try{
+    try {
       const searchItem = await this.agentService.searchBySanghamname(req);
-      return searchItem
-    } catch(error) {
+      return searchItem;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   @Post('/viewsanghambalance')
   async viewSanghamBalance(@Body() req: sanghamDto) {
-    try{
+    try {
       const balance = await this.agentService.getSanghamAvailableBalance(req);
-      return balance
-    } catch(error) {
+      return balance;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
@@ -162,14 +181,14 @@ export class AgentController {
   @Roles(Role.ADMIN)
   @Get('/getallsanghams')
   async getAllSanghams() {
-    try{
+    try {
       const getSanghams = await this.agentService.getAllSanghams();
-      return getSanghams
-    } catch(error) {
+      return getSanghams;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
@@ -177,14 +196,14 @@ export class AgentController {
   @Roles(Role.ADMIN)
   @Get('/getallcustomers')
   async getAllCustomers() {
-    try{
+    try {
       const getCustomers = await this.agentService.getAllCustomers();
-      return getCustomers
-    } catch(error) {
+      return getCustomers;
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 }

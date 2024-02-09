@@ -752,7 +752,7 @@ export class AppuService {
               interest =
                 lastMonthRecord[0].interest +
                 lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
-              fine = lastMonthRecord[0].fine + findCustomerAppu.fine;
+              fine = lastMonthRecord[0].fine + lastMonthRecord[0].interest * (findCustomerAppu.fine / 100);
             } else {
               interest =
                 lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
@@ -762,6 +762,7 @@ export class AppuService {
             interest = 0;
             fine = 0;
           }
+          console.log("....fine", fine)
           const addAppuRecord = await this.appuModel.create({
             sanghamId: depositRecord.sanghamId,
             customerId: depositRecord.customerId,
