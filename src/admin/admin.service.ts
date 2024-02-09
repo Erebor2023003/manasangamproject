@@ -236,6 +236,35 @@ export class AdminService {
     }
   }
 
+  async updatePodupuDetailsbyId(req: podupuDetailsDto) {
+    try {
+      const moderate = await this.podupudetailsModel.updateOne(
+        { podupuDetailsId: req.podupuDetailsId },
+        {
+          $set: {
+            interest: req.interest,
+          },
+        },
+      );
+      if (moderate) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Updated Successfully',
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Invalid Request',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
   async createPodupu() {
     try {
       const customers = await this.customerModel.find();
@@ -985,6 +1014,35 @@ export class AdminService {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           message: 'Deposit Details of Sangham not found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async updateDepositDetailsbyId(req: depositDetailsDto) {
+    try {
+      const moderate = await this.depositdetailsModel.updateOne(
+        { depositDetailsId: req.depositDetailsId },
+        {
+          $set: {
+            interest: req.interest,
+          },
+        },
+      );
+      if (moderate) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Updated Successfully',
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Invalid Request',
         };
       }
     } catch (error) {

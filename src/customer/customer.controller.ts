@@ -96,4 +96,17 @@ export class CustomerController {
       }
     }
   }
+
+  @Post('/getcustomerdetails')
+  async deleteCustomer(@Body() req: customerDto) {
+    try{
+      const getdetails = await this.customerService.deleteCustomer(req);
+      return getdetails
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

@@ -46,6 +46,19 @@ export class SanghamdepositsController {
     }
   }
 
+  @Post('/updatedepositdetailsbyid')
+  async updateSanghamDepositDetailsById(@Body() req: sanghamdepositDetailsDto) {
+    try{
+      const adddetails = await this.sanghamdepositsService.updateSanghamDetailsbyId(req);
+      return adddetails
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/getdepositdetailsbyagent')
   async getSanghamDepositDetailsByAgentId(@Body() req: sanghamdepositDetailsDto) {
     try{

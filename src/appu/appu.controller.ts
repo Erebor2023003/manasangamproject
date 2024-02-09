@@ -63,6 +63,19 @@ export class AppuController {
     }
   }
 
+  @Post('/updatecustomerappudetails')
+  async updateCustomerAppuDetails(@Body() req: appuDetailsDto) {
+    try {
+      const details = await this.appuService.updateAppuDetailsbyId(req);
+      return details;
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
   @Post('/adddsuretymembers')
   @UseInterceptors(
     AnyFilesInterceptor({

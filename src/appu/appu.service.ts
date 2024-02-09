@@ -135,7 +135,7 @@ export class AppuService {
             message: 'Appu Details of customer',
             data: [
               {
-                appuDate: details[0].appuDate,
+                appuDate: findAppus[0].date,
                 sanghamId: details[0].sanghamId,
                 interest: details[0].interest,
                 timePeriod: findAppus[0].timePeriod,
@@ -177,6 +177,35 @@ export class AppuService {
       //   }
       // ]);
       // return details;
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async updateAppuDetailsbyId(req: appuDetailsDto) {
+    try {
+      const moderate = await this.appuDetailsModel.updateOne(
+        { appuDetailsId: req.appuDetailsId },
+        {
+          $set: {
+            interest: req.interest,
+          },
+        },
+      );
+      if (moderate) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Updated Successfully',
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Invalid Request',
+        };
+      }
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

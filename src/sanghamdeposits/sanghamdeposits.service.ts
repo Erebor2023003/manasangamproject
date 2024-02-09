@@ -101,6 +101,35 @@ export class SanghamdepositsService {
     }
   }
 
+  async updateSanghamDetailsbyId(req: sanghamdepositDetailsDto) {
+    try {
+      const moderate = await this.sanghamDepositDetailsModel.updateOne(
+        { sanghamdepositDetailsId: req.sanghamdepositDetailsId },
+        {
+          $set: {
+            interestRate: req.interestRate,
+          },
+        },
+      );
+      if (moderate) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'Updated Successfully',
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Invalid Request',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
   async getSanghamDetailsbyAgentId(req: sanghamdepositDetailsDto) {
     try {
       const addSanghamDetails = await this.sanghamDepositDetailsModel.find({
@@ -131,11 +160,11 @@ export class SanghamdepositsService {
       const findSanghamDetails = await this.sanghamDepositDetailsModel.findOne({
         sanghamId: req.sanghamId,
       });
-      if(!findSanghamDetails) {
+      if (!findSanghamDetails) {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Didn't found sanghamDeposit Details."
-        }
+          message: "Didn't found sanghamDeposit Details.",
+        };
       }
       const dateString = findSanghamDetails.depositDate;
       const [day, month, year] = dateString.split('-');

@@ -247,28 +247,69 @@ export class CustomerService {
           message: "Customer not Found",
         }
       } else {
-        if(findCustomer.status === CustomerStatus.ACTIVE) {
-          return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: "Customer not blocked",
-          }
-        }
-        const changeStatus = await this.customerModel.updateOne({customerId: req.customerId},{
-          $set: {
-            status: CustomerStatus.ACTIVE
-          }
-        });
-        if(changeStatus) {
-          return {
-            statusCode: HttpStatus.OK,
-            message: "Customer Unblocked Successfully",
-          }
+        if(findCustomer.status === CustomerStatus.BLOCK) {
+          const changeStatus = await this.customerModel.updateOne({customerId: req.customerId},{
+            $set: {
+              status: CustomerStatus.ACTIVE
+            }
+          });
+          if(changeStatus) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: "Customer Unblocked Successfully",
+            }
+          } else {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Can't unblock Customer",
+            }
+          } 
+        } else if(findCustomer.status === CustomerStatus.ACTIVE) {
+          const changeStatus = await this.customerModel.updateOne({customerId: req.customerId},{
+            $set: {
+              status: CustomerStatus.BLOCK
+            }
+          });
+          if(changeStatus) {
+            return {
+              statusCode: HttpStatus.OK,
+              message: "Customer blocked Successfully",
+            }
+          } else {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Can't block Customer",
+            }
+          } 
         } else {
           return {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: "Can't unblock Customer",
+            statusCode: HttpStatus.NOT_FOUND,
+            message: "Customer status not found"
           }
-        } 
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  async deleteCustomer(req: customerDto) {
+    try{
+      const eliminate = await this.customerModel.deleteOne({customerId: req.customerId});
+      if(eliminate) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "Deleted Successfully",
+          data: eliminate,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Invalid Request",
+        }
       }
     } catch(error) {
       return {

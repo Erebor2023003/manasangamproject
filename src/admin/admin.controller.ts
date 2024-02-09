@@ -90,6 +90,19 @@ export class AdminController {
     }
   }
 
+  @Post('/updatepodupuDetailsbyid')
+  async updatePodhupuDetailsById(@Body() req: podupuDetailsDto) {
+    try {
+      const details = await this.adminService.updatePodupuDetailsbyId(req);
+      return details;
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
   // @Cron('0 * * * * *')
   @Post('/addcustomerpodupus')
   async addPodhupus() {
@@ -251,6 +264,19 @@ export class AdminController {
   async getDepositDetailsById(@Body() req: depositDetailsDto) {
     try {
       const details = await this.adminService.getDepositDetailsById(req);
+      return details;
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  @Post('/updateDepositDetailsById')
+  async updateDepositDetailsById(@Body() req: depositDetailsDto) {
+    try {
+      const details = await this.adminService.updateDepositDetailsbyId(req);
       return details;
     } catch (error) {
       return {
