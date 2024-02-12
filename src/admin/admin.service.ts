@@ -501,6 +501,11 @@ export class AdminService {
             message: 'Podhupu for this month record not found',
           };
         }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: `Podupu can paid on ${podupuDate.getDate()} or ${podupuextraDay.getDate()} of every month.`
+        }
       }
     } catch (error) {
       return {
