@@ -116,6 +116,20 @@ export class AppuController {
     }
   }
 
+  // @Cron
+  @Post('/blockcustomerdefault')
+  async blockCustomer() {
+    try{
+      const blockCustomer = await this.appuService.blockCustomerDefault();
+      return blockCustomer
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error
+      }
+    }
+  }
+
   // @Cron()
   @Post('/appucron')
   async appuCron() {

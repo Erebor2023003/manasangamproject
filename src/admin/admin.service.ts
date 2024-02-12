@@ -1353,7 +1353,8 @@ export class AdminService {
             return dateB.getMonth() - dateA.getMonth();
           });
           if (lastMonthRecord[0].total === 0) {
-            return 'Record will be create when the deposit is added';
+            continue;
+            // return 'Record will be create when the deposit is added';
           }
           const findSangham = await this.depositdetailsModel.findOne({
             sanghamId: depositRecord.sanghamId,

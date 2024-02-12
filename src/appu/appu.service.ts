@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 import { every } from 'rxjs';
 import { sanghamDto } from 'src/agent/dto/sangham.dto';
 import { customerDto } from 'src/customer/dto/customer.dto';
-import { AppuStatus, CustomerStatus } from 'src/auth/guards/roles.enum';
+import { AppuStatus, CustomerStatus, Role } from 'src/auth/guards/roles.enum';
 import { interest } from './schema/interest.schema';
 import { interestDto } from './dto/interest.dto';
 
@@ -185,7 +185,6 @@ export class AppuService {
     }
   }
 
-
   async addSurety(req: suretyDto, image) {
     try {
       // console.log(req, 'documents...', image);
@@ -200,6 +199,31 @@ export class AppuService {
         });
 
         req.candidateImage = reqDoc.toString();
+      }
+      const findSuretyEligibleStatus = await this.customerModel.findOne({
+        customerId: req.customerId,
+      });
+      const findSuretySangham = await this.customerModel.findOne({
+        $and: [{ aadharNo: req.aadharNumber }, { mobileNo: req.mobileNumber }],
+      });
+      const suretyAvail = await this.suretyModel.findOne({
+        $and: [
+          { aadharNumber: findSuretyEligibleStatus.aadharNo },
+          { mobileNumber: findSuretyEligibleStatus.mobileNo },
+          { customerId: findSuretySangham.customerId },
+        ],
+      });
+      if(suretyAvail) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Lender has given surety to the Given customer.Please change surety member",
+        }
+      }
+      if (findSuretySangham.sanghamId != req.sanghamId) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Surety accepted within the sangham only',
+        };
       }
       const findByAadhar = await this.suretyModel.findOne({
         $and: [
@@ -609,6 +633,92 @@ export class AppuService {
     }
   }
 
+  async blockCustomerDefault() {
+    try {
+      const findAppus = await this.appuModel.find();
+      const recordsByCustomerId = [];
+
+      for (const appuRecord of findAppus) {
+        const { customerId } = appuRecord;
+
+        if (!recordsByCustomerId[customerId]) {
+          recordsByCustomerId[customerId] = [];
+        }
+
+        recordsByCustomerId[customerId].push(appuRecord);
+        // recordsByCustomerId[customerId].sort({createdAt: -1})
+      }
+
+      // Convert object to array of arrays
+      const arrayOfArrays = Object.values(recordsByCustomerId);
+      for (const customerArray of arrayOfArrays) {
+        for (const customerRecord of customerArray) {
+          const finalDate = customerRecord.dueDate;
+          const customerDueDate = new Date(finalDate);
+          const currentDate = new Date();
+          console.log('......customerDueDate', customerDueDate);
+          console.log('......currentDate', currentDate);
+          console.log(
+            'dateEqual',
+            customerDueDate.getDate() === currentDate.getDate() - 1,
+          );
+          console.log(
+            'monthequal',
+            customerDueDate.getMonth(),
+            currentDate.getMonth(),
+          );
+          console.log(
+            'YearEqual',
+            customerDueDate.getFullYear() === currentDate.getFullYear(),
+          );
+          console.log(
+            'equalstatus',
+            customerDueDate.getDate() === currentDate.getDate() - 1 &&
+              customerDueDate.getMonth() === currentDate.getMonth() &&
+              customerDueDate.getFullYear() === currentDate.getFullYear(),
+          );
+          if (
+            customerDueDate.getDate() === currentDate.getDate() - 1 &&
+            customerDueDate.getMonth() === currentDate.getMonth() &&
+            customerDueDate.getFullYear() === currentDate.getFullYear()
+          ) {
+            const getAppuRecords = await this.appuModel
+              .find({ customerId: customerRecord.customerId })
+              .sort({ createdAt: -1 });
+            console.log('getAppuRecords', getAppuRecords);
+            if (getAppuRecords[0].total != 0) {
+              console.log('customerId', getAppuRecords[0]);
+              const blockCustomer = await this.customerModel.updateOne(
+                { customerId: customerRecord.customerId },
+                {
+                  $set: {
+                    status: CustomerStatus.BLOCK,
+                  },
+                },
+              );
+              if (blockCustomer) {
+                break;
+              } else {
+                continue;
+              }
+            } else {
+              continue;
+            }
+          } else {
+            continue;
+          }
+        }
+        continue;
+      }
+      return arrayOfArrays;
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
   async appuCron() {
     try {
       const findAppus = await this.appuModel.find();
@@ -752,7 +862,9 @@ export class AppuService {
               interest =
                 lastMonthRecord[0].interest +
                 lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
-              fine = lastMonthRecord[0].fine + lastMonthRecord[0].interest * (findCustomerAppu.fine / 100);
+              fine =
+                lastMonthRecord[0].fine +
+                lastMonthRecord[0].interest * (findCustomerAppu.fine / 100);
             } else {
               interest =
                 lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
@@ -762,7 +874,7 @@ export class AppuService {
             interest = 0;
             fine = 0;
           }
-          console.log("....fine", fine)
+          console.log('....fine', fine);
           const addAppuRecord = await this.appuModel.create({
             sanghamId: depositRecord.sanghamId,
             customerId: depositRecord.customerId,
@@ -788,6 +900,7 @@ export class AppuService {
           // ...
         } else {
           console.log(`Record already exists for ${depositRecord.date}`);
+          continue;
         }
       }
       return createdRecords;
