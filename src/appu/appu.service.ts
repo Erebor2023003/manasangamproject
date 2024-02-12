@@ -637,7 +637,7 @@ export class AppuService {
     try {
       const findAppus = await this.appuModel.find();
       const recordsByCustomerId = [];
-
+      let blockedCustomers = [];
       for (const appuRecord of findAppus) {
         const { customerId } = appuRecord;
 
@@ -653,7 +653,11 @@ export class AppuService {
       const arrayOfArrays = Object.values(recordsByCustomerId);
       for (const customerArray of arrayOfArrays) {
         for (const customerRecord of customerArray) {
-          const finalDate = customerRecord.dueDate;
+          // const dateString = 
+          const finalDate = customerRecord.dueDate.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );;
           const customerDueDate = new Date(finalDate);
           const currentDate = new Date();
           console.log('......customerDueDate', customerDueDate);
@@ -697,6 +701,8 @@ export class AppuService {
                 },
               );
               if (blockCustomer) {
+                const findBlockedCustomer = await this.customerModel.findOne({customerId: customerRecord.customerId});
+                blockedCustomers.push(findBlockedCustomer);
                 break;
               } else {
                 continue;
@@ -710,7 +716,7 @@ export class AppuService {
         }
         continue;
       }
-      return arrayOfArrays;
+      return blockedCustomers;
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
