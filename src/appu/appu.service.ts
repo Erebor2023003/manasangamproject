@@ -213,11 +213,12 @@ export class AppuService {
           { customerId: findSuretySangham.customerId },
         ],
       });
-      if(suretyAvail) {
+      if (suretyAvail) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: "Lender has given surety to the Given customer.Please change surety member",
-        }
+          message:
+            'Lender has given surety to the Given customer.Please change surety member',
+        };
       }
       if (findSuretySangham.sanghamId != req.sanghamId) {
         return {
@@ -653,11 +654,11 @@ export class AppuService {
       const arrayOfArrays = Object.values(recordsByCustomerId);
       for (const customerArray of arrayOfArrays) {
         for (const customerRecord of customerArray) {
-          // const dateString = 
+          // const dateString =
           const finalDate = customerRecord.dueDate.replace(
             /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
             '',
-          );;
+          );
           const customerDueDate = new Date(finalDate);
           const currentDate = new Date();
           console.log('......customerDueDate', customerDueDate);
@@ -701,7 +702,9 @@ export class AppuService {
                 },
               );
               if (blockCustomer) {
-                const findBlockedCustomer = await this.customerModel.findOne({customerId: customerRecord.customerId});
+                const findBlockedCustomer = await this.customerModel.findOne({
+                  customerId: customerRecord.customerId,
+                });
                 blockedCustomers.push(findBlockedCustomer);
                 break;
               } else {
@@ -938,10 +941,34 @@ export class AppuService {
         },
       ]);
       if (findRecentPaid.length > 0) {
+        const recordsofcustomerappu = await this.appuModel
+          .find({ customerId: findRecentPaid[0].customerId })
+          .sort({ createdAt: -1 });
+        const indexOfPaid = recordsofcustomerappu.findIndex(
+          (record) =>
+            record.appuId === findRecentPaid[0].appuId,
+        );
+        // console.log('......paidIndex', indexOfPaid);
+        const nextRecordAfterPaid = recordsofcustomerappu[indexOfPaid + 1];
+        console.log(".....nextRecordAfterPaid", nextRecordAfterPaid);
         return {
           statusCode: HttpStatus.OK,
           message: 'Recent Paid Appu Details',
-          data: findRecentPaid,
+          data: [{
+            sanghamId: findRecentPaid[0].sanghamId,
+            customerId: findRecentPaid[0].customerId,
+            appuAmount: nextRecordAfterPaid.appuAmount,
+            interest: nextRecordAfterPaid.interest,
+            fine: findRecentPaid[0].fine,
+            paidAmount: findRecentPaid[0].paidAmount,
+            total: findRecentPaid[0].total,
+            date: findRecentPaid[0].date,
+            timePeriod: findRecentPaid[0].date,
+            appuStatus: findRecentPaid[0].appuStatus,
+            dueDate: findRecentPaid[0].dueDate,
+            approveStatus: findRecentPaid[0].approveStatus,
+            appuId: findRecentPaid[0].appuId
+          }],
         };
       } else {
         return {

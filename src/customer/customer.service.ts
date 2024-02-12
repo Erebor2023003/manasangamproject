@@ -5,19 +5,29 @@ import { Model } from 'mongoose';
 import { customerDto } from './dto/customer.dto';
 import { SharedService } from 'src/agent/shared.service';
 import { CustomerStatus } from 'src/auth/guards/roles.enum';
+import { Sangham } from 'src/agent/schema/sangham.schema';
 
 @Injectable()
 export class CustomerService {
   constructor(
     @InjectModel(Customer.name) private readonly customerModel: Model<Customer>,
+    @InjectModel(Sangham.name) private readonly sanghamModel: Model<Sangham>,
     private readonly sharedService: SharedService,
   ) {}
 
   async addCustomer(req: customerDto, image) {
     try {
       const findCustomer = await this.customerModel.findOne({
-        aadharNo: req.aadharNo,
+        $or: [{aadharNo: req.aadharNo}, {mobileNo: req.mobileNo}]
       });
+      const findSangham = await this.sanghamModel.findOne({sanghamId: req.sanghamId});
+      const findCustomersCount = await this.customerModel.find({sanghamId: req.sanghamId}).count();
+      if(findSangham.customersLimit <= findCustomersCount) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Customers Limit reached",
+        }
+      }
       if (findCustomer) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
