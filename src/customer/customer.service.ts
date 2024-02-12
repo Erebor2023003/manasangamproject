@@ -53,6 +53,7 @@ export class CustomerService {
           mobileNo: req.mobileNo,
           sanghamId: req.sanghamId,
           profileImage: req.profileImage,
+          aadharImage2: req.aadharImage2,
           address: req.address,
           otp: 0
         });
