@@ -941,34 +941,10 @@ export class AppuService {
         },
       ]);
       if (findRecentPaid.length > 0) {
-        const recordsofcustomerappu = await this.appuModel
-          .find({ customerId: findRecentPaid[0].customerId })
-          .sort({ createdAt: -1 });
-        const indexOfPaid = recordsofcustomerappu.findIndex(
-          (record) =>
-            record.appuId === findRecentPaid[0].appuId,
-        );
-        // console.log('......paidIndex', indexOfPaid);
-        const nextRecordAfterPaid = recordsofcustomerappu[indexOfPaid + 1];
-        console.log(".....nextRecordAfterPaid", nextRecordAfterPaid);
         return {
           statusCode: HttpStatus.OK,
           message: 'Recent Paid Appu Details',
-          data: [{
-            sanghamId: findRecentPaid[0].sanghamId,
-            customerId: findRecentPaid[0].customerId,
-            appuAmount: nextRecordAfterPaid.appuAmount,
-            interest: nextRecordAfterPaid.interest,
-            fine: findRecentPaid[0].fine,
-            paidAmount: findRecentPaid[0].paidAmount,
-            total: findRecentPaid[0].total,
-            date: findRecentPaid[0].date,
-            timePeriod: findRecentPaid[0].date,
-            appuStatus: findRecentPaid[0].appuStatus,
-            dueDate: findRecentPaid[0].dueDate,
-            approveStatus: findRecentPaid[0].approveStatus,
-            appuId: findRecentPaid[0].appuId
-          }],
+          data: findRecentPaid,
         };
       } else {
         return {
