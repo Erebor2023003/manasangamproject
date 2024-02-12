@@ -175,7 +175,7 @@ export class CustomerService {
             req.profileImage = attachmentFile;
           }
         }
-        if(req.aadharImage || req.profileImage) {
+        if(req.aadharImage || req.profileImage || req.aadharImage2) {
 
           const updateCustomer = await this.customerModel.updateOne({customerId: req.customerId},{
             $set: {
@@ -184,7 +184,8 @@ export class CustomerService {
               aadharNo: req.aadharNo,
               address: req.address,
               aadharImage: req.aadharImage,
-              profileImage: req.profileImage
+              profileImage: req.profileImage,
+              aadharImage2: req.aadharImage2
             }
           });
           if(updateCustomer) {
