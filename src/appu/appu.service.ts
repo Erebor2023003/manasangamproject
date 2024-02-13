@@ -941,10 +941,51 @@ export class AppuService {
         },
       ]);
       if (findRecentPaid.length > 0) {
+        const appuRecords = await this.appuModel
+          .find({ customerId: req.customerId })
+          .sort({ createdAt: -1 });
+        const indexOfPaid = appuRecords.findIndex(
+          (record) => record.appuId === findRecentPaid[0].appuId,
+        );
+        const nextRecordAfterPaid = appuRecords[indexOfPaid + 1];
+        console.log('nextRecordAfterPaid', nextRecordAfterPaid);
+        const findCustomerAppu = await this.appuDetailsModel.findOne({
+          $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
+        });
+        let paidInterest;
+        let paidFine;
+        if (nextRecordAfterPaid.paidAmount === 0) {
+          paidInterest =
+            nextRecordAfterPaid.interest +
+            nextRecordAfterPaid.total * (findCustomerAppu.interest / 100);
+          paidFine =
+            nextRecordAfterPaid.fine +
+            nextRecordAfterPaid.interest * (findCustomerAppu.fine / 100);
+        } else {
+          paidInterest =
+            nextRecordAfterPaid.total * (findCustomerAppu.interest / 100);
+          paidFine = 0;
+        }
         return {
           statusCode: HttpStatus.OK,
           message: 'Recent Paid Appu Details',
-          data: findRecentPaid,
+          data: [
+            {
+              sanghamId: findRecentPaid[0].sanghamId,
+              customerId: findRecentPaid[0].customerId,
+              appuAmount: nextRecordAfterPaid.appuAmount,
+              interest: paidInterest,
+              fine: paidFine,
+              paidAmount: findRecentPaid[0].paidAmount,
+              total: findRecentPaid[0].total,
+              date: findRecentPaid[0].date,
+              timePeriod: findRecentPaid[0].timePeriod,
+              appuStatus: findRecentPaid[0].appuStatus,
+              dueDate: findRecentPaid[0].dueDate,
+              approveStatus: findRecentPaid[0].approveStatus,
+              appuId: findRecentPaid[0].appuId,
+            },
+          ],
         };
       } else {
         return {
