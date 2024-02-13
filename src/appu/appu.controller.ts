@@ -17,6 +17,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { customerDto } from 'src/customer/dto/customer.dto';
 import { interestDto } from './dto/interest.dto';
+import { Cron } from '@nestjs/schedule';
 
 @Controller('appu')
 export class AppuController {
@@ -116,8 +117,8 @@ export class AppuController {
     }
   }
 
-  // @Cron
-  @Post('/blockcustomerdefault')
+  @Cron('0 0 * * *')
+  // @Post('/blockcustomerdefault')
   async blockCustomer() {
     try{
       const blockCustomer = await this.appuService.blockCustomerDefault();
@@ -130,8 +131,8 @@ export class AppuController {
     }
   }
 
-  // @Cron()
-  @Post('/appucron')
+  @Cron('0 0 * * *')
+  // @Post('/appucron')
   async appuCron() {
     try {
       const addappu = await this.appuService.appuCron();

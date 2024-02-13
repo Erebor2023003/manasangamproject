@@ -103,8 +103,8 @@ export class AdminController {
     }
   }
 
-  // @Cron('0 * * * * *')
-  @Post('/addcustomerpodupus')
+  @Cron('0 0 * * *')
+  // @Post('/addcustomerpodupus')
   async addPodhupus() {
     try {
       const addpodhupurecord = await this.adminService.createPodupu();
@@ -299,8 +299,8 @@ export class AdminController {
     }
   }
 
-  // @Cron('0 * * * * *')
-  @Post('/depositCron')
+  @Cron('0 0 * * *')
+  // @Post('/depositCron')
   async cronDeposit() {
     try {
       const cronjob = await this.adminService.depositCron();
