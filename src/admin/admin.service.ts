@@ -1555,11 +1555,32 @@ export class AdminService {
       });
       if (balance.length > 0) {
         // Use reduce to sum up podhupuAmount and fine
-        const totalAmount = balance.reduce((acc, current) => {
-          const podhupuAmount = current.depositAmount || 0;
-          const fine = current.interest || 0;
-          return acc + podhupuAmount + fine;
-        }, 0);
+        // const totalAmount = balance.reduce((acc, current) => {
+        //   const podhupuAmount = current.depositAmount || 0;
+        //   const fine = current.interest || 0;
+        //   return acc + podhupuAmount + fine;
+        // }, 0);
+        const separatedArrays = new Map();
+        balance.forEach(item => {
+          if (!separatedArrays.has(item.customerId)) {
+            separatedArrays.set(item.customerId, []);
+          }
+          separatedArrays.get(item.customerId).push(item);
+        });
+      
+        // Step 2: Sort each separated array in reverse order
+        separatedArrays.forEach(array => {
+          array.sort((a, b) => b.createdAt - a.createdAt); // Assuming createdAt is the sorting criteria
+        });
+      
+        // Step 3: Add the first record of each separated array
+        let totalAmount = 0;
+        separatedArrays.forEach(array => {
+          if (array.length > 0) {
+            const firstRecord = array[0];
+            totalAmount += firstRecord.total;
+          }
+        });
         const sanghamdepositbalance = await this.sanghamDepositModel.find({
           sanghamId: req.sanghamId,
         });
