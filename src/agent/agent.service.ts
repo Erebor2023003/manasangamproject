@@ -12,6 +12,7 @@ import { Podupu } from 'src/admin/schema/podhupu.schema';
 import { Deposit } from 'src/admin/schema/deposit.schema';
 import { SanghamDeposit } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
 import { AppuDetails } from 'src/appu/schema/appudetails.schema';
+import { Appu } from 'src/appu/schema/appu.schema';
 
 @Injectable()
 export class AgentService {
@@ -28,6 +29,8 @@ export class AgentService {
     private readonly sanghamDepositModel: Model<SanghamDeposit>,
     @InjectModel(AppuDetails.name)
     private readonly appuDetailsModel: Model<AppuDetails>,
+    @InjectModel(Appu.name)
+    private readonly appuModel: Model<Appu>,
   ) {}
 
   private agentSanghamMap: Record<string, number> = {};
@@ -612,6 +615,35 @@ export class AgentService {
       //     return acc + podhupuAmount + fine;
       //   }, 0);
       }
+
+
+      const appubalance = await this.appuModel.find({
+        sanghamId: req.sanghamId,
+      });
+      let appuTotal = 0;
+      if (appubalance.length > 0) {
+        const appufirstIndexedTotals = {};
+
+        appubalance.forEach((record) => {
+        const customerId = record.customerId; // Assuming there's a customerId field
+
+        if (!appufirstIndexedTotals[customerId]) {
+          appufirstIndexedTotals[customerId] = [];
+        }
+    
+        appufirstIndexedTotals[customerId].push(record);
+      });
+
+      // Sum up the first indexed totals for all customers
+      const apputotalFirstIndexed:any = Object.values(appufirstIndexedTotals).reduce((acc, records: any) => {
+        // Sort records inversely based on some criteria, assuming 'date' field here
+        records.sort((a, b) => b.createdAt - a.createdAt);
+        // Add total of the first indexed record of each customerId
+        acc += records[0].total || 0;
+        return acc;
+      }, 0);
+      appuTotal = apputotalFirstIndexed
+      }
       
       const sanghamdepositbalance = await this.sanghamDepositModel.find({
         sanghamId: req.sanghamId,
@@ -627,13 +659,14 @@ export class AgentService {
       console.log(totalpodupuAmount);
       console.log(totalAmount);
       console.log(totalSanghamAmount);
+      console.log(appuTotal);
       if (findCustomerInterest) {
         return {
           statusCode: HttpStatus.OK,
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + totalAmount + totalSanghamAmount,
+              totalpodupuAmount + totalAmount + totalSanghamAmount - appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
             interestRate: findCustomerInterest.interest,
@@ -645,7 +678,7 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + totalAmount + totalSanghamAmount,
+              totalpodupuAmount + totalAmount + totalSanghamAmount - appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
           },

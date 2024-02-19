@@ -14,6 +14,7 @@ import { Podupu, podupuSchema } from 'src/admin/schema/podhupu.schema';
 import { Deposit, depositSchema } from 'src/admin/schema/deposit.schema';
 import { SanghamDeposit, sanghamDepositSchema } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
 import { AppuDetails, appuDetailsSchema } from 'src/appu/schema/appudetails.schema';
+import { Appu, appuSchema } from 'src/appu/schema/appu.schema';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AppuDetails, appuDetailsSchema } from 'src/appu/schema/appudetails.sche
       { name: Deposit.name, schema: depositSchema },
       { name: SanghamDeposit.name, schema: sanghamDepositSchema },
       { name: AppuDetails.name, schema: appuDetailsSchema },
+      { name: Appu.name, schema: appuSchema }
     ]),
   ],
   controllers: [AgentController],
