@@ -15,6 +15,7 @@ import { customerDto } from 'src/customer/dto/customer.dto';
 import { AppuStatus, CustomerStatus, Role } from 'src/auth/guards/roles.enum';
 import { interest } from './schema/interest.schema';
 import { interestDto } from './dto/interest.dto';
+import { AgentService } from 'src/agent/agent.service';
 
 @Injectable()
 export class AppuService {
@@ -25,6 +26,7 @@ export class AppuService {
     @InjectModel(Surety.name) private readonly suretyModel: Model<Surety>,
     @InjectModel(Customer.name) private readonly customerModel: Model<Customer>,
     @InjectModel(interest.name) private readonly interestModel: Model<interest>,
+    private agentService: AgentService,
   ) {}
 
   async addappuDetails(req: appuDetailsDto) {
@@ -362,6 +364,34 @@ export class AppuService {
 
   async addAppu(req: appuDto) {
     try {
+
+      const sanghamData: sanghamDto = {
+        sanghamId: req.sanghamId, 
+        customerId: '',
+        agentId: '',
+        sanghamName: '',
+        rateOfInterestPodupu: 0,
+        rateOfInterestAppu: 0,
+        rateOfInterestDeposit: 0,
+        rateOfInterestPodupuFine: 0,
+        startDate: '',
+        endDate: '',
+        longitude: '',
+        latitude: '',
+        address: '',
+        customersLimit: 0
+      };
+      const availExceedAppu = await this.agentService.getSanghamAvailableBalance(sanghamData);
+      console.log("available balance response", availExceedAppu);
+      if(req.appuAmount > availExceedAppu.data.availableBalance) {
+        console.log("please enter the available amount");
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Please enter the amount that was available in sangham",
+          availableAmount: availExceedAppu.data.availableBalance,
+        }
+      }
+
       const customerAppus = await this.appuModel
         .find({
           $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
