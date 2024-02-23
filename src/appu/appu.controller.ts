@@ -91,6 +91,19 @@ export class AppuController {
     }
   }
 
+  @Post('appuproceeding')
+  async appuProcess(@Body() req: suretyDto) {
+    try{
+      const result = await this.appuService.suretyNext(req);
+      return result;
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
   @Post('/addappu')
   async addAppu(@Body() req: appuDto) {
     try {

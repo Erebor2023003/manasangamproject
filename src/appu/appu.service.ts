@@ -202,6 +202,13 @@ export class AppuService {
 
         req.candidateImage = reqDoc.toString();
       }
+      const findCustomerSurities = await this.suretyModel.find({customerId: req.customerId});
+      if(findCustomerSurities.length >= 2) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "No more surities accepted as it reaches the maximum number",
+        }
+      }
       const findSuretyEligibleStatus = await this.customerModel.findOne({
         customerId: req.customerId,
       });
@@ -359,6 +366,28 @@ export class AppuService {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  async suretyNext(req: suretyDto) {
+    try{
+      const findSureties = await this.suretyModel.find({customerId: req.customerId});
+      if(findSureties.length >= 2) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "success appu can be processed soon",
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: "Can't proceed the appu please add sureties that are needed",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
     }
   }
 
