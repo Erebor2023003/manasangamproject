@@ -667,6 +667,7 @@ export class AgentService {
           data: {
             availableBalance:
               totalpodupuAmount + totalAmount + totalSanghamAmount - appuTotal,
+            appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
             interestRate: findCustomerInterest.interest,
@@ -679,6 +680,7 @@ export class AgentService {
           data: {
             availableBalance:
               totalpodupuAmount + totalAmount + totalSanghamAmount - appuTotal,
+            appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
           },
