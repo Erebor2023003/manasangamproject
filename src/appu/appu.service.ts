@@ -202,12 +202,14 @@ export class AppuService {
 
         req.candidateImage = reqDoc.toString();
       }
-      const findCustomerSurities = await this.suretyModel.find({customerId: req.customerId});
-      if(findCustomerSurities.length >= 2) {
+      const findCustomerSurities = await this.suretyModel.find({
+        customerId: req.customerId,
+      });
+      if (findCustomerSurities.length >= 2) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: "No more surities accepted as it reaches the maximum number",
-        }
+          message: 'No more surities accepted as it reaches the maximum number',
+        };
       }
       const findSuretyEligibleStatus = await this.customerModel.findOne({
         customerId: req.customerId,
@@ -370,32 +372,33 @@ export class AppuService {
   }
 
   async suretyNext(req: suretyDto) {
-    try{
-      const findSureties = await this.suretyModel.find({customerId: req.customerId});
-      if(findSureties.length >= 2) {
+    try {
+      const findSureties = await this.suretyModel.find({
+        customerId: req.customerId,
+      });
+      if (findSureties.length >= 2) {
         return {
           statusCode: HttpStatus.OK,
-          message: "success appu can be processed soon",
-        }
+          message: 'success appu can be processed soon',
+        };
       } else {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: "Can't proceed the appu please add sureties that are needed",
-        }
+        };
       }
-    } catch(error) {
+    } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
-      }
+      };
     }
   }
 
   async addAppu(req: appuDto) {
     try {
-
       const sanghamData: sanghamDto = {
-        sanghamId: req.sanghamId, 
+        sanghamId: req.sanghamId,
         customerId: '',
         agentId: '',
         sanghamName: '',
@@ -408,17 +411,18 @@ export class AppuService {
         longitude: '',
         latitude: '',
         address: '',
-        customersLimit: 0
+        customersLimit: 0,
       };
-      const availExceedAppu = await this.agentService.getSanghamAvailableBalance(sanghamData);
-      console.log("available balance response", availExceedAppu);
-      if(req.appuAmount > availExceedAppu.data.availableBalance) {
-        console.log("please enter the available amount");
+      const availExceedAppu =
+        await this.agentService.getSanghamAvailableBalance(sanghamData);
+      console.log('available balance response', availExceedAppu);
+      if (req.appuAmount > availExceedAppu.data.availableBalance) {
+        console.log('please enter the available amount');
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          message: "Please enter the amount that was available in sangham",
+          message: 'Please enter the amount that was available in sangham',
           availableAmount: availExceedAppu.data.availableBalance,
-        }
+        };
       }
 
       const customerAppus = await this.appuModel
@@ -1695,6 +1699,268 @@ export class AppuService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: 'Invalid Request',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async appupaidRecovery(req: appuDto) {
+    try {
+      const podupuList = await this.appuModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      const findProfessions = new Set(
+        podupuList.map((record) => record.customerId),
+      );
+      const totalAppuMembers = findProfessions.size;
+
+      if (podupuList.length > 0) {
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          {
+            $match: {
+              $and: [{ sanghamId: req.sanghamId }],
+            },
+          },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customer',
+            },
+          },
+          {
+            $addFields: {
+              paidStatus: 'paid',
+            },
+          },
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
+            $match: {
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
+            },
+          } as any);
+        }
+
+        const paidList = await this.appuModel.aggregate(aggregationPipeline);
+        // console.log('...paidList', paidList);
+        if (paidList.length > 0) {
+          if (!req.date || req.date == " ") {
+            const currentDate = new Date();
+            const filteredpaidList = [];
+            for (const record of paidList) {
+              const dateString = record.date.replace(
+                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                '',
+              );
+              // const findDepositDate = new Date(dateString);
+              const recordDate = new Date(dateString);
+              // console.log("...recordDate", recordDate);
+              if (
+                recordDate.getMonth() === currentDate.getMonth() &&
+                recordDate.getFullYear() === recordDate.getFullYear()
+              ) {
+                const customerRecords = await this.appuModel.find({
+                  customerId: record.customerId,
+                });
+                console.log("customerRecords", customerRecords);
+                if (customerRecords.length > 1) {
+                  if (record.paidAmount != 0) {
+                    filteredpaidList.push(record);
+                    continue;
+                  } else {
+                    continue;
+                  }
+                } else if(customerRecords.length == 0) {
+                  continue;
+                } else {
+                  filteredpaidList.push(record);
+                  continue;
+                }
+              }
+            }
+            const count = filteredpaidList.length;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Paid Appu List',
+              totalAppuMembers: totalAppuMembers,
+              count: count,
+              data: filteredpaidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+            const count = filteredpaidList.length;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Paid Appu List',
+              totalAppuMembers: totalAppuMembers,
+              count: count,
+              data: filteredpaidList,
+            };
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found appu paid list',
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any appu records by this sangham',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async appuunpaidRecovery(req: appuDto) {
+    try {
+      const podupuList = await this.appuModel.find({
+        sanghamId: req.sanghamId,
+      });
+
+      const findProfessions = new Set(
+        podupuList.map((record) => record.customerId),
+      );
+      const totalAppuMembers = findProfessions.size;
+
+      if (podupuList.length > 0) {
+        const parsedDate = req.date ? new Date(req.date) : null;
+
+        const aggregationPipeline: any[] = [
+          {
+            $match: {
+              $and: [{ sanghamId: req.sanghamId }],
+            },
+          },
+          {
+            $lookup: {
+              from: 'customers',
+              localField: 'customerId',
+              foreignField: 'customerId',
+              as: 'customer',
+            },
+          },
+          {
+            $addFields: {
+              paidStatus: 'unpaid',
+            },
+          },
+        ];
+
+        if (req.customerName) {
+          aggregationPipeline.push({
+            $match: {
+              'customer.firstName': {
+                $regex: new RegExp(req.customerName, 'i'), // Case-insensitive partial match
+              },
+            },
+          } as any);
+        }
+
+        const paidList = await this.appuModel.aggregate(aggregationPipeline);
+        // console.log('...paidList', paidList);
+        if (paidList.length > 0) {
+          if (!req.date || req.date === " ") {
+            const currentDate = new Date();
+            const filteredpaidList = [];
+            for (const record of paidList) {
+              const dateString = record.date.replace(
+                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                '',
+              );
+              const recordDate = new Date(dateString);
+              // console.log("...recordDate", recordDate);
+              if (
+                recordDate.getMonth() === currentDate.getMonth() &&
+                recordDate.getFullYear() === recordDate.getFullYear()
+              ) {
+                const customerRecords = await this.appuModel.find({
+                  customerId: record.customerId,
+                });
+                console.log("customerRecords", customerRecords);
+                if (customerRecords.length > 1) {
+                  if (record.paidAmount == 0) {
+                    filteredpaidList.push(record);
+                    continue;
+                  } else {
+                    continue;
+                  }
+                } else if(customerRecords.length == 0) {
+                  continue;
+                } else {
+                  continue;
+                }
+              }
+            }
+            const count = filteredpaidList.length;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Paid Appu List',
+              totalAppuMembers: totalAppuMembers,
+              count: count,
+              data: filteredpaidList,
+            };
+          } else {
+            const filteredpaidList = parsedDate
+              ? paidList.filter((record) => {
+                  const recordDate = new Date(record.date);
+                  return (
+                    recordDate.getDate() === parsedDate.getDate() &&
+                    recordDate.getMonth() === parsedDate.getMonth() &&
+                    recordDate.getFullYear() === parsedDate.getFullYear()
+                  );
+                })
+              : paidList;
+            const count = filteredpaidList.length;
+
+            return {
+              statusCode: HttpStatus.OK,
+              message: 'Paid Appu List',
+              totalAppuMembers: totalAppuMembers,
+              count: count,
+              data: filteredpaidList,
+            };
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'Not found appu paid list',
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Not found any appu records by this sangham',
         };
       }
     } catch (error) {

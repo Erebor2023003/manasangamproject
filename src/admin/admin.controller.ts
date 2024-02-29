@@ -418,4 +418,56 @@ export class AdminController {
       };
     }
   }
+
+  @Post('/adminpodupurecovery')
+  async getRecovery(@Body() req: podhupuDto) {
+    try{
+      const paidList = await this.adminService.podhupuRecovery(req);
+      return paidList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/adminpodupuunrecovered')
+  async getUnRecovery(@Body() req: podhupuDto) {
+    try{
+      const unpaidList = await this.adminService.podhupuUnRecovery(req);
+      return unpaidList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/admindepositrecovery')
+  async getDepositRecovery(@Body() req: depositDto) {
+    try{
+      const paidList = await this.adminService.depositRecovery(req);
+      return paidList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post('/adminwithdrawrecovery')
+  async getWithdrawRecovery(@Body() req: withdrawDto) {
+    try{
+      const paidList = await this.adminService.withdrawRecovery(req);
+      return paidList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

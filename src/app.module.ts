@@ -21,8 +21,8 @@ import { AppuModule } from './appu/appu.module';
     CustomerModule,
     AuthModule,
     MongooseModule.forRoot(
-      'mongodb://goridesksk:Shiva5230@13.234.247.156:27017/sangham?authSource=admin',
-      // 'mongodb+srv://macsof:macsof@nextlevelcarwash.yjs3i.mongodb.net/sangham?retryWrites=true&w=majority'
+      // 'mongodb://goridesksk:Shiva5230@13.234.247.156:27017/sangham?authSource=admin',
+      'mongodb+srv://macsof:macsof@nextlevelcarwash.yjs3i.mongodb.net/sangham?retryWrites=true&w=majority'
     ),
     ConfigModule.forRoot(),
     JwtModule.registerAsync({

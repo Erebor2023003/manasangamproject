@@ -313,4 +313,30 @@ export class AppuController {
       }
     }
   }
+
+  @Post("/appupaidrecovery")
+  async appupaidRecovery(@Body() req: appuDto) {
+    try{
+      const appuList = await this.appuService.appupaidRecovery(req);
+      return appuList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  @Post("/appuunpaidrecovery")
+  async appuunpaidRecovery(@Body() req: appuDto) {
+    try{
+      const appuList = await this.appuService.appuunpaidRecovery(req);
+      return appuList
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }
