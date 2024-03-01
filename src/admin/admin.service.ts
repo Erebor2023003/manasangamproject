@@ -2241,6 +2241,8 @@ export class AdminService {
               ) {
                 depositRecoveryList.push(record);
                 continue;
+              } else {
+                continue;
               }
             }
             if(depositRecoveryList.length > 0) {
@@ -2253,13 +2255,19 @@ export class AdminService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Deposits not found today",
+                message: "Deposits not found this month",
               }
             }
           } else {
+            console.log("...parsedDate", parsedDate);
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                const recordDate = new Date(dateString);
+                  console.log("....recordDate", recordDate);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -2268,12 +2276,19 @@ export class AdminService {
                 })
               : paidList;
 
-            return {
-              statusCode: HttpStatus.OK,
-              message: 'Deposit List of Sangham',
-              count: count,
-              data: filteredpaidList,
-            };
+            if(filteredpaidList.length>0) {
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Deposit List of Sangham',
+                count: count,
+                data: filteredpaidList,
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "Deposits not found on this given day",
+              }
+            }
           }
         } else {
           return {
@@ -2351,6 +2366,8 @@ export class AdminService {
               ) {
                 depositRecoveryList.push(record);
                 continue;
+              } else {
+                continue;
               }
             }
             if (depositRecoveryList.length > 0) {
@@ -2367,9 +2384,15 @@ export class AdminService {
               };
             }
           } else {
+            console.log("...parsedDate", parsedDate);
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                const recordDate = new Date(dateString);
+                  console.log("....recordDate", recordDate);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -2378,12 +2401,19 @@ export class AdminService {
                 })
               : paidList;
 
-            return {
-              statusCode: HttpStatus.OK,
-              message: 'Withdraws List of Sangham',
-              count: count,
-              data: filteredpaidList,
-            };
+            if(filteredpaidList.length>0) {
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Deposit List of Sangham',
+                count: count,
+                data: filteredpaidList,
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "Deposits not found on this given day",
+              }
+            }
           }
         } else {
           return {

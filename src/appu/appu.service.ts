@@ -1793,33 +1793,70 @@ export class AppuService {
             }
             const count = filteredpaidList.length;
 
-            return {
-              statusCode: HttpStatus.OK,
-              message: 'Paid Appu List',
-              totalAppuMembers: totalAppuMembers,
-              count: count,
-              data: filteredpaidList,
-            };
+            if(filteredpaidList.length>0) {
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Paid Appu List',
+                totalAppuMembers: totalAppuMembers,
+                count: count,
+                data: filteredpaidList,
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "Paid appu records not found for this month",
+              }
+            }
           } else {
-            const filteredpaidList = parsedDate
-              ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
-                  return (
-                    recordDate.getDate() === parsedDate.getDate() &&
-                    recordDate.getMonth() === parsedDate.getMonth() &&
-                    recordDate.getFullYear() === parsedDate.getFullYear()
-                  );
-                })
-              : paidList;
+            // const currentDate = new Date(req.date);
+            console.log("...currentDate", parsedDate);
+            const filteredpaidList = [];
+            for (const record of paidList) {
+              const dateString = record.date.replace(
+                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                '',
+              );
+              const recordDate = new Date(dateString);
+              if (
+                recordDate.getDate() === parsedDate.getDate() &&
+                recordDate.getMonth() === parsedDate.getMonth() &&
+                recordDate.getFullYear() === parsedDate.getFullYear()
+              ) {
+                const customerRecords = await this.appuModel.find({
+                  customerId: record.customerId,
+                });
+                console.log("customerRecords", customerRecords);
+                if (customerRecords.length > 1) {
+                  if (record.paidAmount != 0) {
+                    filteredpaidList.push(record);
+                    continue;
+                  } else {
+                    continue;
+                  }
+                } else if(customerRecords.length == 0) {
+                  continue;
+                } else {
+                  filteredpaidList.push(record);
+                  continue;
+                }
+              }
+            }
             const count = filteredpaidList.length;
 
-            return {
-              statusCode: HttpStatus.OK,
-              message: 'Paid Appu List',
-              totalAppuMembers: totalAppuMembers,
-              count: count,
-              data: filteredpaidList,
-            };
+            if(filteredpaidList.length>0) {
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Paid Appu List',
+                totalAppuMembers: totalAppuMembers,
+                count: count,
+                data: filteredpaidList,
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "Paid appu records not found for this given date",
+              }
+            }
           }
         } else {
           return {
@@ -1887,7 +1924,6 @@ export class AppuService {
         }
 
         const paidList = await this.appuModel.aggregate(aggregationPipeline);
-        // console.log('...paidList', paidList);
         if (paidList.length > 0) {
           if (!req.date || req.date === " ") {
             const currentDate = new Date();
@@ -1901,7 +1937,7 @@ export class AppuService {
               // console.log("...recordDate", recordDate);
               if (
                 recordDate.getMonth() === currentDate.getMonth() &&
-                recordDate.getFullYear() === recordDate.getFullYear()
+                recordDate.getFullYear() === currentDate.getFullYear()
               ) {
                 const customerRecords = await this.appuModel.find({
                   customerId: record.customerId,
@@ -1923,33 +1959,68 @@ export class AppuService {
             }
             const count = filteredpaidList.length;
 
-            return {
-              statusCode: HttpStatus.OK,
-              message: 'Paid Appu List',
-              totalAppuMembers: totalAppuMembers,
-              count: count,
-              data: filteredpaidList,
-            };
+            if(filteredpaidList.length>0) {
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Unpaid Appu List',
+                totalAppuMembers: totalAppuMembers,
+                count: count,
+                data: filteredpaidList,
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "Unpaid records not found for this month",
+              }
+            }
           } else {
-            const filteredpaidList = parsedDate
-              ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
-                  return (
-                    recordDate.getDate() === parsedDate.getDate() &&
-                    recordDate.getMonth() === parsedDate.getMonth() &&
-                    recordDate.getFullYear() === parsedDate.getFullYear()
-                  );
-                })
-              : paidList;
+            const filteredpaidList = [];
+            for (const record of paidList) {
+              const dateString = record.date.replace(
+                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                '',
+              );
+              const recordDate = new Date(dateString);
+              // console.log("...recordDate", recordDate);
+              if (
+                recordDate.getDate() === parsedDate.getDate() &&
+                recordDate.getMonth() === parsedDate.getMonth() &&
+                recordDate.getFullYear() === parsedDate.getFullYear()
+              ) {
+                const customerRecords = await this.appuModel.find({
+                  customerId: record.customerId,
+                });
+                console.log("customerRecords", customerRecords);
+                if (customerRecords.length > 1) {
+                  if (record.paidAmount == 0) {
+                    filteredpaidList.push(record);
+                    continue;
+                  } else {
+                    continue;
+                  }
+                } else if(customerRecords.length == 0) {
+                  continue;
+                } else {
+                  continue;
+                }
+              }
+            }
             const count = filteredpaidList.length;
 
-            return {
-              statusCode: HttpStatus.OK,
-              message: 'Paid Appu List',
-              totalAppuMembers: totalAppuMembers,
-              count: count,
-              data: filteredpaidList,
-            };
+            if(filteredpaidList.length>0) {
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Unpaid Appu List',
+                totalAppuMembers: totalAppuMembers,
+                count: count,
+                data: filteredpaidList,
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "Unpaid records not found for this given date",
+              }
+            }
           }
         } else {
           return {
