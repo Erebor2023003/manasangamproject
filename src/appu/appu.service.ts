@@ -790,11 +790,11 @@ export class AppuService {
       };
     }
   }
-
+  
   async appuCron() {
     try {
       const findAppus = await this.appuModel.find();
-      const aggregatedDeposits = new Map();
+      let aggregateDeposits = [];
 
       for (const deposit of findAppus) {
         if (deposit.approveStatus === 'approved') {
@@ -806,8 +806,6 @@ export class AppuService {
           });
           if (findDetails) {
             const dateString = findDetails.appuDate;
-
-            // console.log(dateString);
             const [day, month, year] = dateString.split('-');
             const numericYear = parseInt(year, 10);
             const numericMonth = parseInt(month, 10);
@@ -815,68 +813,28 @@ export class AppuService {
             const dateObject = new Date(
               Date.UTC(numericYear, numericMonth - 1, +day),
             );
-            console.log('dateObject', dateObject);
             const currentDate = new Date();
             const monthDate = new Date();
             monthDate.setDate(dateObject.getDate());
             monthDate.setMonth(currentDate.getMonth());
             monthDate.setFullYear(currentDate.getFullYear());
-            console.log('monthDate', monthDate);
-            console.log('currentDate', currentDate);
-            console.log(
-              'equalstatus',
-              monthDate.getDate() === currentDate.getDate() &&
-                monthDate.getMonth() === currentDate.getMonth() &&
-                monthDate.getFullYear() === currentDate.getFullYear(),
-            );
             if (
               monthDate.getDate() === currentDate.getDate() &&
               monthDate.getMonth() === currentDate.getMonth() &&
               monthDate.getFullYear() === currentDate.getFullYear()
             ) {
-              const formattedDate = monthDate.toISOString().split('T')[0];
-              const saveFormattedDate = new Date(formattedDate);
-              const formattedSavingDate = format(
-                saveFormattedDate,
-                "EEE MMM dd yyyy HH:mm:ss 'GMT'XXX (zzzz)",
-              );
-              console.log('formattedSavingDate', formattedSavingDate);
-              if (!aggregatedDeposits.has(deposit.sanghamId + formattedDate)) {
-                aggregatedDeposits.set(deposit.sanghamId + formattedDate, {
-                  sanghamId: deposit.sanghamId,
-                  customerId: deposit.customerId,
-                  date: formattedSavingDate,
-                  appuAmount: deposit.appuAmount,
-                  dueDate: deposit.dueDate,
-                  timePeriod: deposit.timePeriod,
-                  approveStatus: deposit.approveStatus,
-                });
-              }
-
-              // Update the depositAmount for the current sanghamId and formattedDate
-              aggregatedDeposits.get(
-                deposit.sanghamId + formattedDate,
-              ).appuAmount = deposit.appuAmount;
+              aggregateDeposits.push(deposit);
+              continue;
             } else {
-              // return `Record can be created only on ${monthDate.getDate()} on every month.`;
               continue;
             }
           }
         } else {
           continue;
-          // return 'No records are approved';
         }
       }
       let createdRecords: any = [];
-      for (const depositRecord of aggregatedDeposits.values()) {
-        console.log('depositRecord', depositRecord);
-        const existingDepositDetails = await this.appuDetailsModel.findOne({
-          sanghamId: depositRecord.sanghamId,
-          customerId: depositRecord.customerId,
-          depositDate: depositRecord.date,
-        });
-
-        if (!existingDepositDetails) {
+      for (const depositRecord of aggregateDeposits) {
           const currentDate = new Date();
 
           const findDeposit = await this.appuModel
@@ -888,37 +846,25 @@ export class AppuService {
             })
             .sort({ createdAt: -1 });
           if (findDeposit[0].appuStatus === 'recovered') {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Appu Amount has been paid Completely',
-            };
+            continue;
           }
           const findDepositDate = new Date(findDeposit[0].date);
-          console.log('findDepositDate', findDepositDate);
           const formattedDate = currentDate.toISOString().split('T')[0];
-          console.log('formattedDate', formattedDate);
           const saveFormattedDate = new Date(formattedDate);
-          console.log('saveFormattedDate', saveFormattedDate);
           if (
             findDepositDate.getDate() === saveFormattedDate.getDate() &&
             findDepositDate.getMonth() === saveFormattedDate.getMonth() &&
             findDepositDate.getFullYear() === saveFormattedDate.getFullYear()
           ) {
-            // return {
-            //   statusCode: HttpStatus.BAD_REQUEST,
-            //   message: 'Appu has been paid on this day',
-            // };
             continue;
           }
           const lastMonthRecord = await this.appuModel
             .find({
               sanghamId: depositRecord.sanghamId,
               customerId: depositRecord.customerId,
-              // date: {$lt: currentDate}
             })
             .sort({ createdAt: -1 });
           if (lastMonthRecord[0].total === 0) {
-            // return 'Record will be create when the Appu is added';
             continue;
           }
           const findCustomerAppu = await this.appuDetailsModel.findOne({
@@ -946,7 +892,6 @@ export class AppuService {
             interest = 0;
             fine = 0;
           }
-          console.log('....fine', fine);
           const addAppuRecord = await this.appuModel.create({
             sanghamId: depositRecord.sanghamId,
             customerId: depositRecord.customerId,
@@ -955,25 +900,17 @@ export class AppuService {
             interest: interest,
             fine: fine,
             total: depositRecord.appuAmount + interest + fine,
-            date: depositRecord.date,
+            date: saveFormattedDate,
             dueDate: depositRecord.dueDate,
             timePeriod: depositRecord.timePeriod,
             approveStatus: depositRecord.approveStatus,
           });
-
-          console.log(`Record created for ${depositRecord.date}`);
           if (addAppuRecord) {
             createdRecords.push(addAppuRecord);
             continue;
+          } else {
+            continue;
           }
-          // return addAppuRecord;
-          // Add interest for the previous month
-          // Your logic to calculate interest and update depositDetails goes here
-          // ...
-        } else {
-          console.log(`Record already exists for ${depositRecord.date}`);
-          continue;
-        }
       }
       return createdRecords;
     } catch (error) {

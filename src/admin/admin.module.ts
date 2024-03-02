@@ -31,6 +31,7 @@ import { SanghamDeposit, sanghamDepositSchema } from 'src/sanghamdeposits/schema
       { name: Deposit.name, schema: depositSchema },
       { name: Withdraw.name, schema: withdrawSchema },
       { name: SanghamDeposit.name, schema: sanghamDepositSchema },
+      { name: Sangham.name, schema: sanghamSchema },
     ]),
   ],
   controllers: [AdminController],

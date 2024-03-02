@@ -17,6 +17,7 @@ import { depositDto } from './dto/deposit.dto';
 import { withdrawDto } from './dto/withdraw.dto';
 import { Withdraw } from './schema/withdraw.schema';
 import { SanghamDeposit } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
+import { Sangham } from 'src/agent/schema/sangham.schema';
 
 @Injectable()
 export class AdminService {
@@ -37,6 +38,7 @@ export class AdminService {
     private readonly authService: AuthService,
     @InjectModel(SanghamDeposit.name)
     private readonly sanghamDepositModel: Model<SanghamDeposit>,
+    @InjectModel(Sangham.name) private readonly sanghamModel: Model<Sangham>,
   ) {}
 
   async adminregister(req: adminDto) {
@@ -279,6 +281,26 @@ export class AdminService {
         if (!findPodhuDetails) {
           continue;
         } else {
+          const sanghamDetails = await this.sanghamModel.findOne({
+            sanghamId: customerRecord.sanghamId,
+          });
+          if (!sanghamDetails) {
+            continue;
+          }
+          const sanghamEndString = sanghamDetails.endDate;
+          const [endDay, endMonth, endYear] = sanghamEndString.split('-');
+          const endNumericYear = parseInt(endYear, 10);
+          const endNumericMonth = parseInt(endMonth, 10);
+          const sanghamEndDate = new Date(
+            Date.UTC(endNumericYear, endNumericMonth - 1, +endDay),
+          );
+          if (
+            sanghamEndDate.getDate() <= currentDate.getDate() &&
+            sanghamEndDate.getMonth() <= currentDate.getMonth() &&
+            sanghamEndDate.getFullYear() <= currentDate.getFullYear()
+          ) {
+            continue;
+          }
           const dateString = findPodhuDetails.startDate;
           const [day, month, year] = dateString.split('-');
           const numericYear = parseInt(year, 10);
@@ -346,11 +368,10 @@ export class AdminService {
                 Total =
                   findPodhuDetails.monthlyAmount +
                   fine +
-                  totalInterest +
                   lastMonthRecords[0].podhupuAmount;
               } else {
                 fine = 0;
-                Total = findPodhuDetails.monthlyAmount + totalInterest;
+                Total = findPodhuDetails.monthlyAmount;
               }
               const createPodhupuRecord = await this.podupuModel.create({
                 sanghamId: customerRecord.sanghamId,
@@ -2017,7 +2038,7 @@ export class AdminService {
               }
             }
             const count = depositRecoveryList.length;
-            if(depositRecoveryList.length > 0) {
+            if (depositRecoveryList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'List of paid records',
@@ -2133,7 +2154,7 @@ export class AdminService {
               }
             }
             const count = depositRecoveryList.length;
-            if(depositRecoveryList.length > 0) {
+            if (depositRecoveryList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'List of unpaid records',
@@ -2245,7 +2266,7 @@ export class AdminService {
                 continue;
               }
             }
-            if(depositRecoveryList.length > 0) {
+            if (depositRecoveryList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'List of deposits',
@@ -2255,19 +2276,19 @@ export class AdminService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Deposits not found this month",
-              }
+                message: 'Deposits not found this month',
+              };
             }
           } else {
-            console.log("...parsedDate", parsedDate);
+            console.log('...parsedDate', parsedDate);
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
-                const recordDate = new Date(dateString);
-                  console.log("....recordDate", recordDate);
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
+                  const recordDate = new Date(dateString);
+                  console.log('....recordDate', recordDate);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -2276,7 +2297,7 @@ export class AdminService {
                 })
               : paidList;
 
-            if(filteredpaidList.length>0) {
+            if (filteredpaidList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Deposit List of Sangham',
@@ -2286,8 +2307,8 @@ export class AdminService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Deposits not found on this given day",
-              }
+                message: 'Deposits not found on this given day',
+              };
             }
           }
         } else {
@@ -2384,15 +2405,15 @@ export class AdminService {
               };
             }
           } else {
-            console.log("...parsedDate", parsedDate);
+            console.log('...parsedDate', parsedDate);
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
-                const recordDate = new Date(dateString);
-                  console.log("....recordDate", recordDate);
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
+                  const recordDate = new Date(dateString);
+                  console.log('....recordDate', recordDate);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -2401,7 +2422,7 @@ export class AdminService {
                 })
               : paidList;
 
-            if(filteredpaidList.length>0) {
+            if (filteredpaidList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Deposit List of Sangham',
@@ -2411,8 +2432,8 @@ export class AdminService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Deposits not found on this given day",
-              }
+                message: 'Deposits not found on this given day',
+              };
             }
           }
         } else {
