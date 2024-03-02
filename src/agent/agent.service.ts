@@ -608,7 +608,6 @@ export class AgentService {
         (acc: any, records: any) => {
           records.sort((a,b) => b.createdAt - a.createdAt);
           acc += records[0].total || 0;
-          acc -= records[0].interest || 0;
           return acc;
         }, 0);
       totalAmount = totalFirstIndexed
