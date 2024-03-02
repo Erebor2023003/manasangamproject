@@ -639,7 +639,7 @@ export class AgentService {
         // Sort records inversely based on some criteria, assuming 'date' field here
         records.sort((a, b) => b.createdAt - a.createdAt);
         // Add total of the first indexed record of each customerId
-        acc += records[0].total || 0;
+        acc += records[0].appuAmount || 0;
         return acc;
       }, 0);
       appuTotal = apputotalFirstIndexed
