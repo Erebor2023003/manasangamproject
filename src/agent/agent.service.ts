@@ -598,22 +598,20 @@ export class AgentService {
         // Check if this is the first indexed record for the customer
         if (!firstIndexedTotals[customerId]) {
           // If it is, store its total
-          firstIndexedTotals[customerId] = record.total || 0;
+          firstIndexedTotals[customerId] = [];
         }
+        firstIndexedTotals[customerId].push(record);
       });
 
       // Sum up the first indexed totals for all customers
       const totalFirstIndexed:any = Object.values(firstIndexedTotals).reduce(
-        (acc:number, total:number) => acc + total,
-        0,
-      );
+        (acc: any, records: any) => {
+          records.sort((a,b) => b.createdAt - a.createdAt);
+          acc += records[0].total || 0;
+          acc -= records[0].interest || 0;
+          return acc;
+        }, 0);
       totalAmount = totalFirstIndexed
-      //   // Use reduce to sum up podhupuAmount and fine
-      //   totalAmount = balance.reduce((acc, current) => {
-      //     const podhupuAmount = current.depositAmount || 0;
-      //     const fine = current.interest || 0;
-      //     return acc + podhupuAmount + fine;
-      //   }, 0);
       }
 
 
@@ -621,6 +619,7 @@ export class AgentService {
         sanghamId: req.sanghamId,
       });
       let appuTotal = 0;
+      let appuInterest = 0;
       if (appubalance.length > 0) {
         const appufirstIndexedTotals = {};
 
@@ -642,7 +641,24 @@ export class AgentService {
         acc += records[0].appuAmount || 0;
         return acc;
       }, 0);
+
+      const appuinterestFirstIndexed:any = Object.values(appufirstIndexedTotals).reduce((acc: any, records: any) => {
+        // Sort records inversely based on some criteria, assuming 'date' field here
+        records.sort((a, b) => b.createdAt - a.createdAt);
+        // let bcc;
+        // let acc;
+        if(records[0].appuAmount === records[1].appuAmount) {
+          acc += records[0].paidAmount;
+        }
+        if(records[0].appuAmount < records[1].appuAmount) {
+          acc += records[0].paidAmount;
+          acc -= (records[1].appuAmount - records[0].appuAmount);
+        }
+        return acc;
+      }, 0);
+
       appuTotal = apputotalFirstIndexed
+      appuInterest = appuinterestFirstIndexed
       }
       
       const sanghamdepositbalance = await this.sanghamDepositModel.find({
@@ -666,7 +682,7 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + totalAmount + totalSanghamAmount - appuTotal,
+              totalpodupuAmount + totalAmount + totalSanghamAmount + appuInterest - appuTotal,
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
@@ -679,7 +695,7 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + totalAmount + totalSanghamAmount - appuTotal,
+              totalpodupuAmount + totalAmount + totalSanghamAmount + appuInterest - appuTotal,
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
