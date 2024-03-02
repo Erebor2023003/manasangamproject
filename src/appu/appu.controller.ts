@@ -144,8 +144,8 @@ export class AppuController {
     }
   }
 
-  // @Cron('0 0 * * *')
-  @Post('/appucron')
+  @Cron('0 0 * * *')
+  // @Post('/appucron')
   async appuCron() {
     try {
       const addappu = await this.appuService.appuCron();
