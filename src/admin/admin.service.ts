@@ -784,7 +784,11 @@ export class AdminService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                  const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -880,7 +884,11 @@ export class AdminService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                  const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -1489,22 +1497,23 @@ export class AdminService {
         }
 
         const paidList = await this.depositModel.aggregate(aggregationPipeline);
-        const count = await this.depositModel
-          .find({ sanghamId: req.sanghamId })
-          .count();
 
         if (paidList.length > 0) {
           if (!req.date) {
             return {
               statusCode: HttpStatus.OK,
               message: 'List of deposits',
-              count: count,
+              count: paidList.length,
               data: paidList,
             };
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                  const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -1516,7 +1525,7 @@ export class AdminService {
             return {
               statusCode: HttpStatus.OK,
               message: 'Deposit List of Sangham',
-              count: count,
+              count: filteredpaidList.length,
               data: filteredpaidList,
             };
           }
@@ -1909,13 +1918,17 @@ export class AdminService {
             return {
               statusCode: HttpStatus.OK,
               message: 'List of withdraws',
-              count: count,
+              count: paidList.length,
               data: paidList,
             };
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                  const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -1927,7 +1940,7 @@ export class AdminService {
             return {
               statusCode: HttpStatus.OK,
               message: 'Withdraw List of Sangham',
-              count: count,
+              count: filteredpaidList.length,
               data: filteredpaidList,
             };
           }

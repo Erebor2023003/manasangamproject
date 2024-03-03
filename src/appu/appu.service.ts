@@ -1334,7 +1334,11 @@ export class AppuService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                  const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
@@ -1443,7 +1447,11 @@ export class AppuService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                  const recordDate = new Date(record.date);
+                const dateString = record.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                  const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
                     recordDate.getMonth() === parsedDate.getMonth() &&
