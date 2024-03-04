@@ -607,12 +607,46 @@ export class AgentService {
       const totalFirstIndexed:any = Object.values(firstIndexedTotals).reduce(
         (acc: any, records: any) => {
           records.sort((a,b) => b.createdAt - a.createdAt);
-          acc += records[0].total || 0;
+          acc += records[0].total;
           return acc;
         }, 0);
       totalAmount = totalFirstIndexed
       }
 
+      const withdrawbalance = await this.depositModel.find({
+        sanghamId: req.sanghamId,
+      });
+      let withdrawtotalAmount = 0;
+      if (withdrawbalance.length > 0) {
+        const firstIndexedTotals = {};
+
+        withdrawbalance.forEach((record) => {
+        const customerId = record.customerId; // Assuming there's a customerId field
+
+        // Check if this is the first indexed record for the customer
+        if (!firstIndexedTotals[customerId]) {
+          // If it is, store its total
+          firstIndexedTotals[customerId] = [];
+        }
+        firstIndexedTotals[customerId].push(record);
+      });
+
+      // Sum up the first indexed totals for all customers
+      const totalFirstIndexed:any = Object.values(firstIndexedTotals).reduce(
+        (acc: any, records: any) => {
+          records.sort((a,b) => b.createdAt - a.createdAt);
+          console.log("records", records);
+          records.forEach((record: any) => {
+            acc += record.depositAmount;
+            acc -= record.withdraw;
+          });
+          // acc += records[0].total;
+          return acc;
+        }, 0);
+        withdrawtotalAmount = totalFirstIndexed
+      }
+
+      // acc -= record.withdraw;
 
       const appubalance = await this.appuModel.find({
         sanghamId: req.sanghamId,
@@ -681,7 +715,7 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + totalAmount + totalSanghamAmount + appuInterest - appuTotal,
+              totalpodupuAmount + withdrawtotalAmount + totalSanghamAmount + appuInterest - appuTotal,
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
@@ -695,7 +729,7 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + totalAmount + totalSanghamAmount + appuInterest - appuTotal,
+              totalpodupuAmount + withdrawtotalAmount + totalSanghamAmount + appuInterest - appuTotal,
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
