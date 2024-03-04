@@ -92,6 +92,7 @@ export class AppuService {
       const findAppus = await this.appuModel
         .find({ customerId: req.customerId })
         .sort({ createdAt: -1 });
+        const findCustomerAppus = await this.appuModel.find({customerId: req.customerId});
       const findSurety = await this.suretyModel.find({
         $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
       });
@@ -109,7 +110,7 @@ export class AppuService {
           },
           {
             $addFields: {
-              appuAmount: findAppus[0].appuAmount,
+              appuAmount: findCustomerAppus[0].appuAmount,
               dueDate: findAppus[0].dueDate,
               surety: suretyIds,
             },
@@ -144,7 +145,7 @@ export class AppuService {
                 customerId: details[0].customerId,
                 fine: details[0].fine,
                 appuDetailsId: details[0].appuDetailsId,
-                appuAmount: details[0].appuAmount,
+                appuAmount: findCustomerAppus[0].appuAmount,
                 dueDate: details[0].dueDate,
                 surety: details[0].surety,
               },
