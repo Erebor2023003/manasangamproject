@@ -686,6 +686,7 @@ export class AgentService {
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
             interestRate: findCustomerInterest.interest,
+            appuInterest: appuInterest,
           },
         };
       } else {
@@ -698,6 +699,7 @@ export class AgentService {
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
+            appuInterest: appuInterest
           },
         };
       }

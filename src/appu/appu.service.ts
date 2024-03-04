@@ -138,7 +138,7 @@ export class AppuService {
             message: 'Appu Details of customer',
             data: [
               {
-                appuDate: findAppus[0].date,
+                appuDate: findCustomerAppus[0].date,
                 sanghamId: details[0].sanghamId,
                 interest: details[0].interest,
                 timePeriod: findAppus[0].timePeriod,
