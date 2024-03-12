@@ -1729,10 +1729,7 @@ export class AppuService {
                   } else {
                     continue;
                   }
-                } else if(customerRecords.length == 0) {
-                  continue;
-                } else {
-                  filteredpaidList.push(record);
+                } else{
                   continue;
                 }
               }
