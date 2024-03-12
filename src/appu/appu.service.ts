@@ -92,7 +92,9 @@ export class AppuService {
       const findAppus = await this.appuModel
         .find({ customerId: req.customerId })
         .sort({ createdAt: -1 });
-        const findCustomerAppus = await this.appuModel.find({customerId: req.customerId});
+      const findCustomerAppus = await this.appuModel.find({
+        customerId: req.customerId,
+      });
       const findSurety = await this.suretyModel.find({
         $and: [{ sanghamId: req.sanghamId }, { customerId: req.customerId }],
       });
@@ -791,7 +793,7 @@ export class AppuService {
       };
     }
   }
-  
+
   async appuCron() {
     try {
       const findAppus = await this.appuModel.find();
@@ -836,82 +838,82 @@ export class AppuService {
       }
       let createdRecords: any = [];
       for (const depositRecord of aggregateDeposits) {
-          const currentDate = new Date();
+        const currentDate = new Date();
 
-          const findDeposit = await this.appuModel
-            .find({
-              $and: [
-                { sanghamId: depositRecord.sanghamId },
-                { customerId: depositRecord.customerId },
-              ],
-            })
-            .sort({ createdAt: -1 });
-          if (findDeposit[0].appuStatus === 'recovered') {
-            continue;
-          }
-          const findDepositDate = new Date(findDeposit[0].date);
-          const formattedDate = currentDate.toISOString().split('T')[0];
-          const saveFormattedDate = new Date(formattedDate);
-          if (
-            findDepositDate.getDate() === saveFormattedDate.getDate() &&
-            findDepositDate.getMonth() === saveFormattedDate.getMonth() &&
-            findDepositDate.getFullYear() === saveFormattedDate.getFullYear()
-          ) {
-            continue;
-          }
-          const lastMonthRecord = await this.appuModel
-            .find({
-              sanghamId: depositRecord.sanghamId,
-              customerId: depositRecord.customerId,
-            })
-            .sort({ createdAt: -1 });
-          if (lastMonthRecord[0].total === 0) {
-            continue;
-          }
-          const findCustomerAppu = await this.appuDetailsModel.findOne({
+        const findDeposit = await this.appuModel
+          .find({
             $and: [
               { sanghamId: depositRecord.sanghamId },
               { customerId: depositRecord.customerId },
             ],
-          });
-          let interest;
-          let fine;
-          if (lastMonthRecord.length > 0) {
-            if (lastMonthRecord[0].interest != 0) {
-              interest =
-                lastMonthRecord[0].interest +
-                lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
-              fine =
-                lastMonthRecord[0].fine +
-                lastMonthRecord[0].interest * (findCustomerAppu.fine / 100);
-            } else {
-              interest =
-                lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
-              fine = 0;
-            }
-          } else {
-            interest = 0;
-            fine = 0;
-          }
-          const addAppuRecord = await this.appuModel.create({
+          })
+          .sort({ createdAt: -1 });
+        if (findDeposit[0].appuStatus === 'recovered') {
+          continue;
+        }
+        const findDepositDate = new Date(findDeposit[0].date);
+        const formattedDate = currentDate.toISOString().split('T')[0];
+        const saveFormattedDate = new Date(formattedDate);
+        if (
+          findDepositDate.getDate() === saveFormattedDate.getDate() &&
+          findDepositDate.getMonth() === saveFormattedDate.getMonth() &&
+          findDepositDate.getFullYear() === saveFormattedDate.getFullYear()
+        ) {
+          continue;
+        }
+        const lastMonthRecord = await this.appuModel
+          .find({
             sanghamId: depositRecord.sanghamId,
             customerId: depositRecord.customerId,
-            appuAmount: depositRecord.appuAmount,
-            paidAmount: 0,
-            interest: interest,
-            fine: fine,
-            total: depositRecord.appuAmount + interest + fine,
-            date: saveFormattedDate,
-            dueDate: depositRecord.dueDate,
-            timePeriod: depositRecord.timePeriod,
-            approveStatus: depositRecord.approveStatus,
-          });
-          if (addAppuRecord) {
-            createdRecords.push(addAppuRecord);
-            continue;
+          })
+          .sort({ createdAt: -1 });
+        if (lastMonthRecord[0].total === 0) {
+          continue;
+        }
+        const findCustomerAppu = await this.appuDetailsModel.findOne({
+          $and: [
+            { sanghamId: depositRecord.sanghamId },
+            { customerId: depositRecord.customerId },
+          ],
+        });
+        let interest;
+        let fine;
+        if (lastMonthRecord.length > 0) {
+          if (lastMonthRecord[0].interest != 0) {
+            interest =
+              lastMonthRecord[0].interest +
+              lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
+            fine =
+              lastMonthRecord[0].fine +
+              lastMonthRecord[0].interest * (findCustomerAppu.fine / 100);
           } else {
-            continue;
+            interest =
+              lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
+            fine = 0;
           }
+        } else {
+          interest = 0;
+          fine = 0;
+        }
+        const addAppuRecord = await this.appuModel.create({
+          sanghamId: depositRecord.sanghamId,
+          customerId: depositRecord.customerId,
+          appuAmount: depositRecord.appuAmount,
+          paidAmount: 0,
+          interest: interest,
+          fine: fine,
+          total: depositRecord.appuAmount + interest + fine,
+          date: saveFormattedDate,
+          dueDate: depositRecord.dueDate,
+          timePeriod: depositRecord.timePeriod,
+          approveStatus: depositRecord.approveStatus,
+        });
+        if (addAppuRecord) {
+          createdRecords.push(addAppuRecord);
+          continue;
+        } else {
+          continue;
+        }
       }
       return createdRecords;
     } catch (error) {
@@ -1335,10 +1337,10 @@ export class AppuService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
                   const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
@@ -1448,10 +1450,10 @@ export class AppuService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
                   const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
@@ -1703,7 +1705,7 @@ export class AppuService {
         const paidList = await this.appuModel.aggregate(aggregationPipeline);
         // console.log('...paidList', paidList);
         if (paidList.length > 0) {
-          if (!req.date || req.date == " ") {
+          if (!req.date || req.date == ' ') {
             const currentDate = new Date();
             const filteredpaidList = [];
             for (const record of paidList) {
@@ -1721,7 +1723,7 @@ export class AppuService {
                 const customerRecords = await this.appuModel.find({
                   customerId: record.customerId,
                 });
-                console.log("customerRecords", customerRecords);
+                console.log('customerRecords', customerRecords);
                 if (customerRecords.length > 1) {
                   if (record.paidAmount != 0) {
                     filteredpaidList.push(record);
@@ -1729,14 +1731,14 @@ export class AppuService {
                   } else {
                     continue;
                   }
-                } else{
+                } else {
                   continue;
                 }
               }
             }
             const count = filteredpaidList.length;
 
-            if(filteredpaidList.length>0) {
+            if (filteredpaidList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Paid Appu List',
@@ -1747,12 +1749,12 @@ export class AppuService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Paid appu records not found for this month",
-              }
+                message: 'Paid appu records not found for this month',
+              };
             }
           } else {
             // const currentDate = new Date(req.date);
-            console.log("...currentDate", parsedDate);
+            console.log('...currentDate', parsedDate);
             const filteredpaidList = [];
             for (const record of paidList) {
               const dateString = record.date.replace(
@@ -1768,7 +1770,7 @@ export class AppuService {
                 const customerRecords = await this.appuModel.find({
                   customerId: record.customerId,
                 });
-                console.log("customerRecords", customerRecords);
+                console.log('customerRecords', customerRecords);
                 if (customerRecords.length > 1) {
                   if (record.paidAmount != 0) {
                     filteredpaidList.push(record);
@@ -1776,7 +1778,7 @@ export class AppuService {
                   } else {
                     continue;
                   }
-                } else if(customerRecords.length == 0) {
+                } else if (customerRecords.length == 0) {
                   continue;
                 } else {
                   filteredpaidList.push(record);
@@ -1786,7 +1788,7 @@ export class AppuService {
             }
             const count = filteredpaidList.length;
 
-            if(filteredpaidList.length>0) {
+            if (filteredpaidList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Paid Appu List',
@@ -1797,8 +1799,8 @@ export class AppuService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Paid appu records not found for this given date",
-              }
+                message: 'Paid appu records not found for this given date',
+              };
             }
           }
         } else {
@@ -1868,7 +1870,7 @@ export class AppuService {
 
         const paidList = await this.appuModel.aggregate(aggregationPipeline);
         if (paidList.length > 0) {
-          if (!req.date || req.date === " ") {
+          if (!req.date || req.date === ' ') {
             const currentDate = new Date();
             const filteredpaidList = [];
             for (const record of paidList) {
@@ -1885,7 +1887,7 @@ export class AppuService {
                 const customerRecords = await this.appuModel.find({
                   customerId: record.customerId,
                 });
-                console.log("customerRecords", customerRecords);
+                console.log('customerRecords', customerRecords);
                 if (customerRecords.length > 1) {
                   if (record.paidAmount == 0) {
                     filteredpaidList.push(record);
@@ -1893,7 +1895,7 @@ export class AppuService {
                   } else {
                     continue;
                   }
-                } else if(customerRecords.length == 0) {
+                } else if (customerRecords.length == 0) {
                   continue;
                 } else {
                   continue;
@@ -1902,7 +1904,7 @@ export class AppuService {
             }
             const count = filteredpaidList.length;
 
-            if(filteredpaidList.length>0) {
+            if (filteredpaidList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Unpaid Appu List',
@@ -1913,8 +1915,8 @@ export class AppuService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Unpaid records not found for this month",
-              }
+                message: 'Unpaid records not found for this month',
+              };
             }
           } else {
             const filteredpaidList = [];
@@ -1933,7 +1935,7 @@ export class AppuService {
                 const customerRecords = await this.appuModel.find({
                   customerId: record.customerId,
                 });
-                console.log("customerRecords", customerRecords);
+                console.log('customerRecords', customerRecords);
                 if (customerRecords.length > 1) {
                   if (record.paidAmount == 0) {
                     filteredpaidList.push(record);
@@ -1941,7 +1943,7 @@ export class AppuService {
                   } else {
                     continue;
                   }
-                } else if(customerRecords.length == 0) {
+                } else if (customerRecords.length == 0) {
                   continue;
                 } else {
                   continue;
@@ -1950,7 +1952,7 @@ export class AppuService {
             }
             const count = filteredpaidList.length;
 
-            if(filteredpaidList.length>0) {
+            if (filteredpaidList.length > 0) {
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Unpaid Appu List',
@@ -1961,8 +1963,8 @@ export class AppuService {
             } else {
               return {
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "Unpaid records not found for this given date",
-              }
+                message: 'Unpaid records not found for this given date',
+              };
             }
           }
         } else {
@@ -1975,6 +1977,70 @@ export class AppuService {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           message: 'Not found any appu records by this sangham',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async monthlyAppu(req: appuDto) {
+    try {
+      const findAppus = await this.appuModel.aggregate([
+        {$match: { sanghamId: req.sanghamId }},
+        {
+          $lookup: {
+            from: "customers",
+            localField: "customerId",
+            foreignField: "customerId",
+            as: "customerId",
+          }
+        }
+      ]);
+      if (findAppus.length > 0) {
+        const currentAppus = [];
+        const currentDate = new Date();
+        for (const appuRecord of findAppus) {
+          const dateString = appuRecord.date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const parsedDate = new Date(dateString);
+          if (
+            currentDate.getMonth() === parsedDate.getMonth() &&
+            currentDate.getFullYear() === parsedDate.getFullYear()
+          ) {
+            const lastMonthRecords = await this.appuModel.find({customerId: appuRecord.customerId[0].customerId});
+            if(lastMonthRecords.length == 1) {
+              currentAppus.push(appuRecord);
+              continue;
+            } else {
+              continue;
+            }
+          } else {
+            continue;
+          }
+        }
+        if(currentAppus.length > 0) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: "List of appu given this month",
+            count: currentAppus.length,
+            data: currentAppus,
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: "Appu List for month not found",
+          }
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Appus not found',
         };
       }
     } catch (error) {

@@ -339,4 +339,17 @@ export class AppuController {
       }
     }
   }
+
+  @Post('/monthlyappulist')
+  async monthAppuList(@Body() req: appuDto) {
+    try{
+      const monthlyrecords = await this.appuService.monthlyAppu(req);
+      return monthlyrecords
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }
