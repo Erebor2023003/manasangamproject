@@ -879,7 +879,7 @@ export class AppuService {
         let interest;
         let fine;
         if (lastMonthRecord.length > 0) {
-          if (lastMonthRecord[0].interest != 0) {
+          if (lastMonthRecord[0].paidAmount === 0) {
             interest =
               lastMonthRecord[0].interest +
               lastMonthRecord[0].total * (findCustomerAppu.interest / 100);
@@ -1035,7 +1035,7 @@ export class AppuService {
             ],
           })
           .sort({ createdAt: -1 });
-        if (findAppu.length > 0) {
+        if (findAppu.length > 1) {
           const dateString = findAppu[0].date.replace(
             /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
             '',
@@ -1054,8 +1054,6 @@ export class AppuService {
                 };
               }
               if (
-                findAppu[0].interest === 0 &&
-                findAppu[0].fine === 0 &&
                 findAppu[0].paidAmount != 0
               ) {
                 return {
@@ -1079,11 +1077,7 @@ export class AppuService {
                 interest = 0;
                 appuTotal = findAppu[0].appuAmount - remainingAmount;
                 fine = 0;
-                grandTotal =
-                  findAppu[0].total -
-                  findAppu[0].interest -
-                  findAppu[0].fine -
-                  remainingAmount;
+                grandTotal = findAppu[0].total - req.paidAmount;
               } else {
                 return {
                   statusCode: HttpStatus.NOT_ACCEPTABLE,
@@ -1100,9 +1094,6 @@ export class AppuService {
                 {
                   $set: {
                     paidAmount: req.paidAmount,
-                    interest: interest,
-                    fine: fine,
-                    appuAmount: appuTotal,
                     total: grandTotal,
                   },
                 },
@@ -1161,6 +1152,11 @@ export class AppuService {
                 message: 'Appu Record does not created',
               };
             }
+          }
+        } else if(findAppu.length == 1){
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: "Please wait till next month to pay interest",
           }
         } else {
           return {
@@ -1990,15 +1986,15 @@ export class AppuService {
   async monthlyAppu(req: appuDto) {
     try {
       const findAppus = await this.appuModel.aggregate([
-        {$match: { sanghamId: req.sanghamId }},
+        { $match: { sanghamId: req.sanghamId } },
         {
           $lookup: {
-            from: "customers",
-            localField: "customerId",
-            foreignField: "customerId",
-            as: "customerId",
-          }
-        }
+            from: 'customers',
+            localField: 'customerId',
+            foreignField: 'customerId',
+            as: 'customerId',
+          },
+        },
       ]);
       if (findAppus.length > 0) {
         const currentAppus = [];
@@ -2009,12 +2005,18 @@ export class AppuService {
             '',
           );
           const parsedDate = new Date(dateString);
+
           if (
-            currentDate.getMonth() === parsedDate.getMonth() &&
-            currentDate.getFullYear() === parsedDate.getFullYear()
+            (currentDate.getMonth() === parsedDate.getMonth() &&
+              currentDate.getFullYear() === parsedDate.getFullYear()) ||
+            (currentDate.getDate() === 1 &&
+              currentDate.getMonth() === parsedDate.getMonth() + 1 &&
+              currentDate.getFullYear() === parsedDate.getFullYear())
           ) {
-            const lastMonthRecords = await this.appuModel.find({customerId: appuRecord.customerId[0].customerId});
-            if(lastMonthRecords.length == 1) {
+            const lastMonthRecords = await this.appuModel.find({
+              customerId: appuRecord.customerId[0].customerId,
+            });
+            if (lastMonthRecords.length == 1) {
               currentAppus.push(appuRecord);
               continue;
             } else {
@@ -2024,18 +2026,18 @@ export class AppuService {
             continue;
           }
         }
-        if(currentAppus.length > 0) {
+        if (currentAppus.length > 0) {
           return {
             statusCode: HttpStatus.OK,
-            message: "List of appu given this month",
+            message: 'List of appu given this month',
             count: currentAppus.length,
             data: currentAppus,
-          }
+          };
         } else {
           return {
             statusCode: HttpStatus.NOT_FOUND,
-            message: "Appu List for month not found",
-          }
+            message: 'Appu List for month not found',
+          };
         }
       } else {
         return {
