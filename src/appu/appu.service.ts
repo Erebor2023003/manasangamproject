@@ -1735,11 +1735,15 @@ export class AppuService {
             const count = filteredpaidList.length;
 
             if (filteredpaidList.length > 0) {
+              const totalRecoveredAppu = filteredpaidList.reduce((acc, current) => {
+                return acc += current.paidAmount
+              }, 0);
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Paid Appu List',
                 totalAppuMembers: totalAppuMembers,
                 count: count,
+                total: totalRecoveredAppu,
                 data: filteredpaidList,
               };
             } else {
@@ -1785,11 +1789,15 @@ export class AppuService {
             const count = filteredpaidList.length;
 
             if (filteredpaidList.length > 0) {
+              const totalRecoveredAppu = filteredpaidList.reduce((acc, current) => {
+                return acc += current.paidAmount
+              }, 0);
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Paid Appu List',
                 totalAppuMembers: totalAppuMembers,
                 count: count,
+                total: totalRecoveredAppu,
                 data: filteredpaidList,
               };
             } else {
