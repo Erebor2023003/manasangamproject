@@ -1053,9 +1053,7 @@ export class AppuService {
                   message: 'Enter Valid Amount',
                 };
               }
-              if (
-                findAppu[0].paidAmount != 0
-              ) {
+              if (findAppu[0].paidAmount != 0) {
                 return {
                   statusCode: HttpStatus.CONFLICT,
                   message: 'This month appu has been paid Already',
@@ -1153,11 +1151,11 @@ export class AppuService {
               };
             }
           }
-        } else if(findAppu.length == 1){
+        } else if (findAppu.length == 1) {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
-            message: "Please wait till next month to pay interest",
-          }
+            message: 'Please wait till next month to pay interest',
+          };
         } else {
           return {
             statusCode: HttpStatus.NOT_FOUND,
@@ -1735,9 +1733,12 @@ export class AppuService {
             const count = filteredpaidList.length;
 
             if (filteredpaidList.length > 0) {
-              const totalRecoveredAppu = filteredpaidList.reduce((acc, current) => {
-                return acc += current.paidAmount
-              }, 0);
+              const totalRecoveredAppu = filteredpaidList.reduce(
+                (acc, current) => {
+                  return (acc += current.paidAmount);
+                },
+                0,
+              );
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Paid Appu List',
@@ -1789,9 +1790,12 @@ export class AppuService {
             const count = filteredpaidList.length;
 
             if (filteredpaidList.length > 0) {
-              const totalRecoveredAppu = filteredpaidList.reduce((acc, current) => {
-                return acc += current.paidAmount
-              }, 0);
+              const totalRecoveredAppu = filteredpaidList.reduce(
+                (acc, current) => {
+                  return (acc += current.paidAmount);
+                },
+                0,
+              );
               return {
                 statusCode: HttpStatus.OK,
                 message: 'Paid Appu List',

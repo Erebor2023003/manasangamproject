@@ -15,4 +15,6 @@ export class sanghamDepositDto {
     total: number
     @ApiProperty()
     date: string
+    @ApiProperty()
+    withdraw: number
 }

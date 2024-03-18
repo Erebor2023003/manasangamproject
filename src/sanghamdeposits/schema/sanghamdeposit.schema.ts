@@ -18,6 +18,8 @@ export class SanghamDeposit extends Document{
     total: number
     @Prop()
     date: string
+    @Prop()
+    withdraw: number
 }
 
 export const sanghamDepositSchema  = SchemaFactory.createForClass(SanghamDeposit);

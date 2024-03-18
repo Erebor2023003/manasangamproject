@@ -7,6 +7,9 @@ import { SanghamWithdraw } from './schema/sanghamwithdraw.schema';
 import { sanghamdepositDetailsDto } from './dto/sanghamdepositdetails.dto';
 import { sanghamDepositDto } from './dto/sanghamdeposits.dto';
 import { sanghamWithdrawDto } from './dto/sanghamwithdraw.dto';
+import { paidDto } from './dto/paid.dto';
+import { Sangham } from 'src/agent/schema/sangham.schema';
+import { Paid } from './schema/paid.schema';
 
 @Injectable()
 export class SanghamdepositsService {
@@ -17,8 +20,13 @@ export class SanghamdepositsService {
     private readonly sanghamDepositModel: Model<SanghamDeposit>,
     @InjectModel(SanghamWithdraw.name)
     private readonly sanghamWithdrawModel: Model<SanghamWithdraw>,
+    @InjectModel(Sangham.name) private readonly sanghamModel: Model<Sangham>,
+    @InjectModel(Paid.name) private readonly paidModel:Model<Paid>,
   ) {}
 
+  // start of sangham deposits details
+
+  // Add Sangham Deposit Details
   async createSanghamDetails(req: sanghamdepositDetailsDto) {
     try {
       const findSanghams = await this.sanghamDepositDetailsModel.findOne({
@@ -53,29 +61,7 @@ export class SanghamdepositsService {
     }
   }
 
-  async getSanghamDetailslist() {
-    try {
-      const addSanghamDetails = await this.sanghamDepositDetailsModel.find();
-      if (addSanghamDetails.length > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'List of Sangham Deposit Details',
-          data: addSanghamDetails,
-        };
-      } else {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: "Didn't found",
-        };
-      }
-    } catch (error) {
-      return {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: error,
-      };
-    }
-  }
-
+  // Get sangham deposit details by sanghamId
   async getSanghamDetailsbyId(req: sanghamdepositDetailsDto) {
     try {
       const addSanghamDetails = await this.sanghamDepositDetailsModel.findOne({
@@ -101,6 +87,7 @@ export class SanghamdepositsService {
     }
   }
 
+  // Update sangham Deposit Interest
   async updateSanghamDetailsbyId(req: sanghamdepositDetailsDto) {
     try {
       const moderate = await this.sanghamDepositDetailsModel.updateOne(
@@ -130,142 +117,133 @@ export class SanghamdepositsService {
     }
   }
 
-  async getSanghamDetailsbyAgentId(req: sanghamdepositDetailsDto) {
-    try {
-      const addSanghamDetails = await this.sanghamDepositDetailsModel.find({
-        agentId: req.agentId,
-      });
-      if (addSanghamDetails.length > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'Deposit Details of Sangham',
-          data: addSanghamDetails,
-        };
-      } else {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'Not Found details of sangham',
-        };
-      }
-    } catch (error) {
-      return {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: error,
-      };
-    }
-  }
+  // end of sangham deposit details
 
+  //start of sangham deposits
+
+  // Pay or Add sangham Deposit
   async createSanghamDeposit(req: sanghamDepositDto) {
     try {
-      const findSanghamDetails = await this.sanghamDepositDetailsModel.findOne({
-        sanghamId: req.sanghamId,
-      });
-      if (!findSanghamDetails) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: "Didn't found sanghamDeposit Details.",
-        };
-      }
-      const dateString = findSanghamDetails.depositDate;
-      const [day, month, year] = dateString.split('-');
-      const numericYear = parseInt(year, 10);
-      const numericMonth = parseInt(month, 10);
+      const findSanghamDepositDetails =
+        await this.sanghamDepositDetailsModel.findOne({
+          sanghamId: req.sanghamId,
+        });
+      if (findSanghamDepositDetails) {
+        const currentDate = new Date();
+        const dateString = findSanghamDepositDetails.depositDate;
+        const [day, month, year] = dateString.split('-');
+        const numericYear = parseInt(year, 10);
+        const numericMonth = parseInt(month, 10);
 
-      const depositDate = new Date(
-        Date.UTC(numericYear, numericMonth - 1, +day),
-      );
-      const currentDate = new Date();
-      const depositStartDate = new Date();
-      depositStartDate.setDate(depositDate.getDate());
-      depositStartDate.setMonth(currentDate.getMonth());
-      depositStartDate.setFullYear(currentDate.getFullYear());
-      const depositEndDate = new Date();
-      depositEndDate.setDate(depositStartDate.getDate() + 1);
-      console.log(depositStartDate);
-      console.log(depositEndDate);
-      console.log(depositStartDate <= currentDate);
-      console.log(currentDate <= depositEndDate);
-      console.log(
-        depositStartDate <= currentDate && currentDate <= depositEndDate,
-      );
-      if (depositStartDate <= currentDate && currentDate <= depositEndDate) {
-        if (req.depositAmount === 0 || !req.depositAmount) {
+        const dateObject = new Date(
+          Date.UTC(numericYear, numericMonth - 1, +day),
+        );
+        if (
+          currentDate.getDate() === dateObject.getDate() ||
+          currentDate.getDate() === dateObject.getDate() + 1
+        ) {
+          const sanghamRecords = await this.sanghamDepositModel
+            .find({ sanghamId: req.sanghamId })
+            .sort({ createdAt: -1 });
+          if (sanghamRecords.length > 0) {
+            const dateString = sanghamRecords[0].date.replace(
+              /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+              '',
+            );
+            const lastMonthDate = new Date(dateString);
+            if (
+              lastMonthDate.getDate() === currentDate.getDate() &&
+              lastMonthDate.getMonth() === currentDate.getMonth() &&
+              lastMonthDate.getFullYear() === currentDate.getFullYear()
+            ) {
+              if (sanghamRecords[0].depositAmount === 0) {
+                const updateDeposit = await this.sanghamDepositModel.updateOne(
+                  { sanghamDepositId: sanghamRecords[0].sanghamDepositId },
+                  {
+                    $set: {
+                      depositAmount: req.depositAmount,
+                      total: sanghamRecords[0].total + req.depositAmount,
+                    },
+                  },
+                );
+                if (updateDeposit) {
+                  const findDetails = await this.sanghamDepositModel.findOne({
+                    sanghamDepositId: sanghamRecords[0].sanghamDepositId,
+                  });
+                  return {
+                    statusCode: HttpStatus.OK,
+                    message: 'SanghamDeposit Paid Scuccessfully',
+                    data: {
+                      sanghamId: findDetails.sanghamId,
+                      agentId: findDetails.agentId,
+                      depositAmount: findDetails.depositAmount,
+                      interest: findSanghamDepositDetails.interestRate,
+                      withdraw: findDetails.withdraw,
+                      total: findDetails.total,
+                      date: findDetails.date,
+                    },
+                  };
+                } else {
+                  return {
+                    statusCode: HttpStatus.EXPECTATION_FAILED,
+                    message: 'Sangham Deposit failed.',
+                  };
+                }
+              } else {
+                return {
+                  statusCode: HttpStatus.CONFLICT,
+                  message: 'Deposit already paid for this month',
+                };
+              }
+            } else {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: `SanghamDeposit record not created for this month.`,
+              };
+            }
+          } else {
+            const date = new Date();
+            date.setDate(dateObject.getDate());
+            const addDeposit = await this.sanghamDepositModel.create({
+              sanghamId: req.sanghamId,
+              agentId: req.agentId,
+              depositAmount: req.depositAmount,
+              interest: 0,
+              withdraw: 0,
+              total: req.depositAmount,
+              date: date,
+            });
+            if (addDeposit) {
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Sangham Deposit added Successfully',
+                data: {
+                  sanghamId: addDeposit.sanghamId,
+                  agentId: addDeposit.agentId,
+                  depositAmount: addDeposit.depositAmount,
+                  interest: findSanghamDepositDetails.interestRate,
+                  withdraw: addDeposit.withdraw,
+                  total: addDeposit.total,
+                  date: addDeposit.date,
+                },
+              };
+            } else {
+              return {
+                statusCode: HttpStatus.EXPECTATION_FAILED,
+                message: 'Sangham Deposit failed',
+              };
+            }
+          }
+        } else {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
-            message: 'Enter Valid Deposit amount',
-          };
-        }
-        let depositInterest: number = 0;
-        let total = 0;
-        const findDeposits = await this.sanghamDepositModel.find({
-          sanghamId: req.sanghamId,
-        });
-        findDeposits.sort((a, b) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-
-          return dateB.getMonth() - dateA.getMonth();
-        });
-        console.log('findDeposits', findDeposits);
-        console.log(req.depositAmount);
-
-        if (findDeposits.length > 0) {
-          const parseDate = new Date(findDeposits[0].date);
-          console.log('parseDate', parseDate);
-          if (
-            parseDate.getDate() === currentDate.getDate() &&
-            parseDate.getMonth() === currentDate.getMonth()
-          ) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Deposit Already paid for this month',
-            };
-          }
-
-          if (parseDate.getMonth() === currentDate.getMonth() - 1) {
-            depositInterest =
-              findDeposits[0].interest +
-              findDeposits[0].total * (findSanghamDetails.interestRate / 100);
-            total = findDeposits[0].total - findDeposits[0].interest;
-          }
-          console.log(depositInterest);
-        }
-        if (currentDate.getDate() != depositDate.getDate()) {
-          currentDate.setDate(depositDate.getDate());
-        }
-        const addDeposit = await this.sanghamDepositModel.create({
-          sanghamId: req.sanghamId,
-          agentId: req.agentId,
-          depositAmount: req.depositAmount,
-          date: currentDate,
-          interest: depositInterest,
-          total: depositInterest + total,
-        });
-        if (addDeposit) {
-          console.log('depositInterest', depositInterest);
-          console.log('addDeposit.depositAmount', addDeposit.depositAmount);
-          console.log('total', total);
-          const updateTotal = await this.sanghamDepositModel.updateOne(
-            { sanghamDepositId: addDeposit.sanghamDepositId },
-            {
-              $set: {
-                total: depositInterest + addDeposit.depositAmount + total,
-              },
-            },
-          );
-          const findSanghamDeposit = await this.sanghamDepositModel.findOne({
-            sanghamDepositId: addDeposit.sanghamDepositId,
-          });
-          return {
-            statusCode: HttpStatus.OK,
-            message: 'Deposit added Succesfully',
-            data: findSanghamDeposit,
+            message: `Sangham Deposit can only be taken on ${dateObject.getDate()} of every month`,
           };
         }
       } else {
         return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: `Deposit for Sangham can only be done on ${depositStartDate} to ${depositEndDate} only.`,
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Sangham Deposit Details not found',
         };
       }
     } catch (error) {
@@ -276,34 +254,106 @@ export class SanghamdepositsService {
     }
   }
 
+  // Cron api for creating sangham deposits
+  async sanghamDepositCron() {
+    try {
+      const createdRecords = [];
+      const findsanghamdeposits = await this.sanghamDepositModel.find();
+      // console.log("...findsanghamdeposits", findsanghamdeposits);
+      if (findsanghamdeposits.length > 0) {
+        for (const sanghamRecords of findsanghamdeposits) {
+          // console.log("...length", findsanghamdeposits.length);
+          const findDepositRecords = await this.sanghamDepositModel
+            .find({ sanghamId: sanghamRecords.sanghamId })
+            .sort({ createdAt: -1 });
+          if (findDepositRecords.length > 0) {
+            const parseDate = findDepositRecords[0].date.replace(
+              /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+              '',
+            );
+            const parsedDepositDate = new Date(parseDate);
+            const currentDate = new Date();
+            if (
+              currentDate.getDate() === parsedDepositDate.getDate() &&
+              currentDate.getMonth() === parsedDepositDate.getMonth() &&
+              currentDate.getFullYear() === parsedDepositDate.getFullYear()
+            ) {
+              continue;
+            } else {
+              const findDetails = await this.sanghamDepositDetailsModel.findOne(
+                {
+                  sanghamId: sanghamRecords.sanghamId,
+                },
+              );
+
+              if (findDetails) {
+                const dateString = findDetails.depositDate;
+                const [day, month, year] = dateString.split('-');
+                const numericYear = parseInt(year, 10);
+                const numericMonth = parseInt(month, 10);
+
+                const dateObject = new Date(
+                  Date.UTC(numericYear, numericMonth - 1, +day),
+                );
+                const depositDate = sanghamRecords.date.replace(
+                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                  '',
+                );
+                const lastMonthDate = new Date(depositDate);
+                if (
+                  lastMonthDate.getDate() === dateObject.getDate() &&
+                  lastMonthDate.getMonth() === currentDate.getMonth() - 1
+                ) {
+                  let interest =
+                    findDepositRecords[0].total *
+                    (findDetails.interestRate / 100);
+                  const createRecord = await this.sanghamDepositModel.create({
+                    sanghamId: sanghamRecords.sanghamId,
+                    depositAmount: 0,
+                    agentId: sanghamRecords.agentId,
+                    withdraw: 0,
+                    interest: interest,
+                    date: currentDate,
+                    total: findDepositRecords[0].total + interest,
+                  });
+                  if (createRecord) {
+                    createdRecords.push(createRecord);
+                    continue;
+                  } else {
+                    continue;
+                  }
+                } else {
+                  continue;
+                }
+              } else {
+                continue;
+              }
+            }
+          } else {
+            continue;
+          }
+        }
+        return createdRecords;
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'SanghamDeposits not found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  // Get sangham deposit list of sangham
   async getSanghamDepositsBySangham(req: sanghamDepositDto) {
     try {
       const findSanghamDeposits = await this.sanghamDepositModel.find({
         sanghamId: req.sanghamId,
       });
-      const passedDate = new Date(req.date);
-      console.log(passedDate);
-      // Sorting the deposits by a custom logic
-      findSanghamDeposits.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-
-        // Compare dates to bring the matching date records to the front
-        if (
-          dateA.getDate() === passedDate.getDate() &&
-          dateA.getMonth() === passedDate.getMonth() &&
-          dateA.getFullYear() === passedDate.getFullYear()
-        ) {
-          return -1; // a comes first
-        } else if (
-          dateB.getDate() === passedDate.getDate() &&
-          dateB.getMonth() === passedDate.getMonth() &&
-          dateB.getFullYear() === passedDate.getFullYear()
-        ) {
-          return 1; // b comes first
-        }
-      });
-
       if (findSanghamDeposits.length > 0) {
         return {
           statusCode: HttpStatus.OK,
@@ -324,6 +374,7 @@ export class SanghamdepositsService {
     }
   }
 
+  // Get sangham balance of sangham deposits
   async sanghamDepositsBalance(req: sanghamDepositDto) {
     try {
       const balance = await this.sanghamDepositModel.find({
@@ -333,8 +384,7 @@ export class SanghamdepositsService {
         // Use reduce to sum up podhupuAmount and fine
         const totalAmount = balance.reduce((acc, current) => {
           const podhupuAmount = current.depositAmount || 0;
-          const fine = current.interest || 0;
-          return acc + podhupuAmount + fine;
+          return acc + podhupuAmount;
         }, 0);
         return {
           statusCode: HttpStatus.OK,
@@ -355,6 +405,73 @@ export class SanghamdepositsService {
     }
   }
 
+  // Sangham Deposit history with date filtering
+  async sanghamDepositsHistory(req: sanghamDepositDto) {
+    try {
+      const depositHistory = await this.sanghamDepositModel.find({
+        $and: [{ sanghamId: req.sanghamId }, { depositAmount: { $ne: 0 } }],
+      });
+      if (depositHistory.length > 0) {
+        if (req.date) {
+          const parseDate = new Date(req.date);
+          console.log('....parseDate', parseDate);
+          const matchingRecords = [];
+          depositHistory.map((record) => {
+            console.log('...matchRecord', new Date(record.date));
+            const matchRecordDate = new Date(record.date);
+            if (
+              matchRecordDate.getDate() === parseDate.getDate() &&
+              matchRecordDate.getMonth() === parseDate.getMonth() &&
+              matchRecordDate.getFullYear() === parseDate.getFullYear()
+            ) {
+              matchingRecords.push(record);
+            }
+          });
+          console.log('matchingRecords', matchingRecords);
+          const remainingRecords = [];
+          depositHistory.map((record) => {
+            console.log('...remainRecord', new Date(record.date));
+            const remainRecordDate = new Date(record.date);
+            if (
+              remainRecordDate.getDate() != parseDate.getDate() ||
+              remainRecordDate.getMonth() != parseDate.getMonth() ||
+              remainRecordDate.getFullYear() != parseDate.getFullYear()
+            ) {
+              remainingRecords.push(record);
+            }
+          });
+          const sortedDepositHistory = matchingRecords.concat(remainingRecords);
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of deposits lists',
+            data: sortedDepositHistory,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of deposits lists',
+            data: depositHistory,
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Deposits Not Found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  // end of sanghamDeposits
+
+  //start of sangham withdraws
+
+  // Withdraw api to withdraw from Sangham Deposits
   async createSanghamWithdraw(req: sanghamWithdrawDto) {
     try {
       const sanghamDeposit = await this.sanghamDepositDetailsModel.findOne({
@@ -371,26 +488,15 @@ export class SanghamdepositsService {
         );
         const currentDate = new Date();
         const withdrawStartDate = new Date(depositDate);
-        withdrawStartDate.setMonth(currentDate.getMonth());
-        withdrawStartDate.setFullYear(currentDate.getFullYear());
-        console.log(withdrawStartDate);
-        const withdrawEndDate = new Date();
-        withdrawEndDate.setDate(withdrawStartDate.getDate() + 1);
-        withdrawEndDate.setMonth(currentDate.getMonth());
-        withdrawEndDate.setFullYear(currentDate.getFullYear());
-        console.log(withdrawEndDate);
         if (
-          withdrawStartDate <= currentDate &&
-          currentDate <= withdrawEndDate
+          withdrawStartDate.getDate() === currentDate.getDate() ||
+          withdrawStartDate.getDate() + 1 === currentDate.getDate()
         ) {
-          const findSanghamDeposits = await this.sanghamDepositModel.find({
-            sanghamId: req.sanghamId,
-          });
-          findSanghamDeposits.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            return dateB.getMonth() - dateA.getMonth();
-          });
+          const findSanghamDeposits = await this.sanghamDepositModel
+            .find({
+              sanghamId: req.sanghamId,
+            })
+            .sort({ createdAt: -1 });
           if (
             !req.withdrawAmount ||
             req.withdrawAmount === 0 ||
@@ -401,10 +507,6 @@ export class SanghamdepositsService {
               message: 'Please enter valid amount',
             };
           }
-          if (currentDate != depositDate) {
-            currentDate.setDate(depositDate.getDate());
-          }
-          console.log(req.withdrawAmount);
           const withdrawRecords = await this.sanghamWithdrawModel
             .find({ sanghamId: req.sanghamId })
             .sort({ createdAt: -1 });
@@ -413,7 +515,8 @@ export class SanghamdepositsService {
             const parseDate = new Date(withdrawRecords[0].date);
             console.log('parseDate', parseDate);
             if (
-              currentDate.getDate() === parseDate.getDate() &&
+              (currentDate.getDate() === parseDate.getDate() ||
+                currentDate.getDate() - 1 === parseDate.getDate()) &&
               currentDate.getMonth() === parseDate.getMonth() &&
               currentDate.getFullYear() === parseDate.getFullYear()
             ) {
@@ -423,58 +526,64 @@ export class SanghamdepositsService {
               };
             }
           }
+          const savingDate = new Date();
+          savingDate.setDate(withdrawStartDate.getDate());
           const addwithdraw = await this.sanghamWithdrawModel.create({
             withdrawAmount: req.withdrawAmount,
-            date: currentDate,
+            date: savingDate,
             agentId: sanghamDeposit.agentId,
             sanghamId: req.sanghamId,
             total: req.withdrawAmount,
           });
           if (addwithdraw) {
-            if (addwithdraw.withdrawAmount > findSanghamDeposits[0].interest) {
-              const takingAmount =
-                addwithdraw.withdrawAmount - findSanghamDeposits[0].interest;
-              const updateDepositDeposit =
-                await this.sanghamDepositModel.updateOne(
-                  { sanghamDepositId: findSanghamDeposits[0].sanghamDepositId },
-                  {
-                    $set: {
-                      depositAmount:
-                        findSanghamDeposits[0].depositAmount - takingAmount,
-                      interest: 0,
-                      total:
-                        findSanghamDeposits[0].total -
-                        addwithdraw.withdrawAmount,
-                    },
-                  },
-                );
+            const findDeposit = await this.sanghamDepositModel.findOne({
+              sanghamDepositId: findSanghamDeposits[0].sanghamDepositId,
+            });
+            const updateDepositTotal = await this.sanghamDepositModel.updateOne(
+              { sanghamDepositId: findSanghamDeposits[0].sanghamDepositId },
+              {
+                $set: {
+                  withdraw: addwithdraw.withdrawAmount,
+                  total:
+                    findSanghamDeposits[0].total - addwithdraw.withdrawAmount,
+                },
+              },
+            );
+            if (updateDepositTotal) {
+              const updatedDeposit = await this.sanghamDepositModel.findOne({
+                sanghamDepositId: findSanghamDeposits[0].sanghamDepositId,
+              });
+              const updateWithdraw = await this.sanghamWithdrawModel.updateOne({sanghamWithdrawId: addwithdraw.sanghamWithdrawId},{
+                $set: {
+                  total: updatedDeposit.total
+                }
+              })
+              return {
+                statusCode: HttpStatus.OK,
+                message: 'Withdraw Successful',
+                data: {
+                  date: addwithdraw.date,
+                  depositAmount: findDeposit.total - findDeposit.interest,
+                  total: findDeposit.total,
+                  interest: findDeposit.interest,
+                  withdrawAmount: addwithdraw.withdrawAmount,
+                  availableBalance: updatedDeposit.total,
+                },
+              };
             } else {
-              const updateDepositTotal =
-                await this.sanghamDepositModel.updateOne(
-                  { sanghamDepositId: findSanghamDeposits[0].sanghamDepositId },
-                  {
-                    $set: {
-                      interest:
-                        findSanghamDeposits[0].interest -
-                        addwithdraw.withdrawAmount,
-                      total:
-                        findSanghamDeposits[0].total -
-                        addwithdraw.withdrawAmount,
-                    },
-                  },
-                );
+              const deleteWithdraw = await this.sanghamWithdrawModel.deleteOne({
+                sanghamWithdrawId: addwithdraw.sanghamWithdrawId,
+              });
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Withdraw failed',
+              };
             }
-
-            return {
-              statusCode: HttpStatus.OK,
-              message: 'Withdraw Successful',
-              data: addwithdraw,
-            };
           }
         } else {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
-            message: `Withdraw can only be done on ${withdrawStartDate} to ${withdrawEndDate}.`,
+            message: `Withdraw can't approved`,
           };
         }
       } else {
@@ -491,44 +600,56 @@ export class SanghamdepositsService {
     }
   }
 
+  // Get Withdraw list by date filter
   async getSanghamWithdrawsbyfilter(req: sanghamWithdrawDto) {
     try {
-      const findSanghamDeposits = await this.sanghamWithdrawModel.find({
-        sanghamId: req.sanghamId,
-      });
-      const passedDate = new Date(req.date);
-      console.log(passedDate);
-      // Sorting the deposits by a custom logic
-      findSanghamDeposits.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-
-        // Compare dates to bring the matching date records to the front
-        if (
-          dateA.getDate() === passedDate.getDate() &&
-          dateA.getMonth() === passedDate.getMonth() &&
-          dateA.getFullYear() === passedDate.getFullYear()
-        ) {
-          return -1; // a comes first
-        } else if (
-          dateB.getDate() === passedDate.getDate() &&
-          dateB.getMonth() === passedDate.getMonth() &&
-          dateB.getFullYear() === passedDate.getFullYear()
-        ) {
-          return 1; // b comes first
+      const depositHistory = await this.sanghamWithdrawModel.find({sanghamId: req.sanghamId });
+      if (depositHistory.length > 0) {
+        if (req.date) {
+          const parseDate = new Date(req.date);
+          console.log('....parseDate', parseDate);
+          const matchingRecords = [];
+          depositHistory.map((record) => {
+            console.log('...matchRecord', new Date(record.date));
+            const matchRecordDate = new Date(record.date);
+            if (
+              matchRecordDate.getDate() === parseDate.getDate() &&
+              matchRecordDate.getMonth() === parseDate.getMonth() &&
+              matchRecordDate.getFullYear() === parseDate.getFullYear()
+            ) {
+              matchingRecords.push(record);
+            }
+          });
+          console.log('matchingRecords', matchingRecords);
+          const remainingRecords = [];
+          depositHistory.map((record) => {
+            console.log('...remainRecord', new Date(record.date));
+            const remainRecordDate = new Date(record.date);
+            if (
+              remainRecordDate.getDate() != parseDate.getDate() ||
+              remainRecordDate.getMonth() != parseDate.getMonth() ||
+              remainRecordDate.getFullYear() != parseDate.getFullYear()
+            ) {
+              remainingRecords.push(record);
+            }
+          });
+          const sortedDepositHistory = matchingRecords.concat(remainingRecords);
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of withdraw lists of sangham',
+            data: sortedDepositHistory,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of withdraw lists of sangham',
+            data: depositHistory,
+          };
         }
-      });
-
-      if (findSanghamDeposits.length > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'List of sangham withdraws',
-          data: findSanghamDeposits,
-        };
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: 'Sangham Withdraws Not Found',
+          message: 'Deposits Not Found',
         };
       }
     } catch (error) {
@@ -536,6 +657,107 @@ export class SanghamdepositsService {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: error,
       };
+    }
+  }
+
+  // end of sangham withdraws
+
+  // start of Paid Apis
+
+  // Add Pay to manasangham
+  async payToSangham(req: paidDto) {
+    try{
+      const findSangham = await this.sanghamModel.findOne({sanghamId: req.sanghamId});
+      if(findSangham) {
+        const currentDate = new Date();
+        const createPay = await this.paidModel.create({
+          sanghamId: req.sanghamId,
+          amount: req.amount,
+          date: currentDate,
+        });
+        if(createPay) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: "Paid to sangham Successfully",
+            data: createPay,
+          }
+        } else {
+          return {
+            statusCode: HttpStatus.EXPECTATION_FAILED,
+            message: "Pay to sangham failed"
+          }
+        }
+      } else {
+        return{
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "sangham details not found",
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
+
+  //Get pays of sangham to manasangham
+  async paysList(req: paidDto) {
+    try{
+      const paysList = await this.paidModel.find({sanghamId: req.sanghamId});
+      if(paysList.length>0) {
+        if (req.date) {
+          const parseDate = new Date(req.date);
+          console.log('....parseDate', parseDate);
+          const matchingRecords = [];
+          paysList.map((record) => {
+            console.log('...matchRecord', new Date(record.date));
+            const matchRecordDate = new Date(record.date);
+            if (
+              matchRecordDate.getDate() === parseDate.getDate() &&
+              matchRecordDate.getMonth() === parseDate.getMonth() &&
+              matchRecordDate.getFullYear() === parseDate.getFullYear()
+            ) {
+              matchingRecords.push(record);
+            }
+          });
+          console.log('matchingRecords', matchingRecords);
+          const remainingRecords = [];
+          paysList.map((record) => {
+            console.log('...remainRecord', new Date(record.date));
+            const remainRecordDate = new Date(record.date);
+            if (
+              remainRecordDate.getDate() != parseDate.getDate() ||
+              remainRecordDate.getMonth() != parseDate.getMonth() ||
+              remainRecordDate.getFullYear() != parseDate.getFullYear()
+            ) {
+              remainingRecords.push(record);
+            }
+          });
+          const sortedDepositHistory = matchingRecords.concat(remainingRecords);
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of withdraw lists of sangham',
+            data: sortedDepositHistory,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of withdraw lists of sangham',
+            data: paysList,
+          };
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "No paid List found"
+        }
+      }
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
     }
   }
 }

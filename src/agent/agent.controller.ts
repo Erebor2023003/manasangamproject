@@ -206,4 +206,17 @@ export class AgentController {
       };
     }
   }
+
+  @Post('/monthlytransactions')
+  async monthlyTransactionList(@Body() req: sanghamDto) {
+    try{
+      const monthlylist = await this.agentService.monthlyTotal(req);
+      return monthlylist
+    } catch(error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      }
+    }
+  }
 }

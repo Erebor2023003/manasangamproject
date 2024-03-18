@@ -585,7 +585,7 @@ export class AgentService {
           return acc + podhupuAmount + fine;
         }, 0);
       }
-      console.log("......podupu",totalpodupuAmount);
+      console.log('......podupu', totalpodupuAmount);
       const balance = await this.depositModel.find({
         sanghamId: req.sanghamId,
       });
@@ -593,27 +593,29 @@ export class AgentService {
       if (balance.length > 0) {
         const firstIndexedTotals = {};
 
-      balance.forEach((record) => {
-        const customerId = record.customerId; // Assuming there's a customerId field
+        balance.forEach((record) => {
+          const customerId = record.customerId; // Assuming there's a customerId field
 
-        // Check if this is the first indexed record for the customer
-        if (!firstIndexedTotals[customerId]) {
-          // If it is, store its total
-          firstIndexedTotals[customerId] = [];
-        }
-        firstIndexedTotals[customerId].push(record);
-      });
+          // Check if this is the first indexed record for the customer
+          if (!firstIndexedTotals[customerId]) {
+            // If it is, store its total
+            firstIndexedTotals[customerId] = [];
+          }
+          firstIndexedTotals[customerId].push(record);
+        });
 
-      // Sum up the first indexed totals for all customers
-      const totalFirstIndexed:any = Object.values(firstIndexedTotals).reduce(
-        (acc: any, records: any) => {
-          records.sort((a,b) => b.createdAt - a.createdAt);
-          acc += records[0].total;
-          return acc;
-        }, 0);
-      totalAmount = totalFirstIndexed
+        // Sum up the first indexed totals for all customers
+        const totalFirstIndexed: any = Object.values(firstIndexedTotals).reduce(
+          (acc: any, records: any) => {
+            records.sort((a, b) => b.createdAt - a.createdAt);
+            acc += records[0].total;
+            return acc;
+          },
+          0,
+        );
+        totalAmount = totalFirstIndexed;
       }
-      console.log(".....deposit",totalAmount);
+      console.log('.....deposit', totalAmount);
       const withdrawbalance = await this.depositModel.find({
         sanghamId: req.sanghamId,
       });
@@ -622,31 +624,33 @@ export class AgentService {
         const firstIndexedTotals = {};
 
         withdrawbalance.forEach((record) => {
-        const customerId = record.customerId; // Assuming there's a customerId field
+          const customerId = record.customerId; // Assuming there's a customerId field
 
-        // Check if this is the first indexed record for the customer
-        if (!firstIndexedTotals[customerId]) {
-          // If it is, store its total
-          firstIndexedTotals[customerId] = [];
-        }
-        firstIndexedTotals[customerId].push(record);
-      });
+          // Check if this is the first indexed record for the customer
+          if (!firstIndexedTotals[customerId]) {
+            // If it is, store its total
+            firstIndexedTotals[customerId] = [];
+          }
+          firstIndexedTotals[customerId].push(record);
+        });
 
-      // Sum up the first indexed totals for all customers
-      const totalFirstIndexed:any = Object.values(firstIndexedTotals).reduce(
-        (acc: any, records: any) => {
-          records.sort((a,b) => b.createdAt - a.createdAt);
-          // console.log("records", records);
-          records.forEach((record: any) => {
-            acc += record.depositAmount;
-            acc -= record.withdraw;
-          });
-          // acc += records[0].total;
-          return acc;
-        }, 0);
-        withdrawtotalAmount = totalFirstIndexed
+        // Sum up the first indexed totals for all customers
+        const totalFirstIndexed: any = Object.values(firstIndexedTotals).reduce(
+          (acc: any, records: any) => {
+            records.sort((a, b) => b.createdAt - a.createdAt);
+            // console.log("records", records);
+            records.forEach((record: any) => {
+              acc += record.depositAmount;
+              acc -= record.withdraw;
+            });
+            // acc += records[0].total;
+            return acc;
+          },
+          0,
+        );
+        withdrawtotalAmount = totalFirstIndexed;
       }
-      console.log("...withdrawAmount", withdrawtotalAmount);
+      console.log('...withdrawAmount', withdrawtotalAmount);
 
       // acc -= record.withdraw;
 
@@ -659,44 +663,48 @@ export class AgentService {
         const appufirstIndexedTotals = {};
 
         appubalance.forEach((record) => {
-        const customerId = record.customerId; // Assuming there's a customerId field
+          const customerId = record.customerId; // Assuming there's a customerId field
 
-        if (!appufirstIndexedTotals[customerId]) {
-          appufirstIndexedTotals[customerId] = [];
-        }
-    
-        appufirstIndexedTotals[customerId].push(record);
-      });
-      // console.log("....appufirstIndexedTotals",appufirstIndexedTotals);
-      // Sum up the first indexed totals for all customers
-      const apputotalFirstIndexed:any = Object.values(appufirstIndexedTotals).reduce((acc, records: any) => {
-        records.sort((a, b) => b.createdAt - a.createdAt);
-        // console.log("....appusortrecords",records);
-        acc += records[0].appuAmount || 0;
-        return acc;
-      }, 0);
-      appuTotal = apputotalFirstIndexed
-      console.log("....appuTotal", appuTotal);
+          if (!appufirstIndexedTotals[customerId]) {
+            appufirstIndexedTotals[customerId] = [];
+          }
 
-      const appuinterestFirstIndexed:any = Object.values(appufirstIndexedTotals).reduce((acc: any, records: any) => {
-        // Sort records inversely based on some criteria, assuming 'date' field here
-        records.sort((a, b) => b.createdAt - a.createdAt);
-        // console.log("....records", records);
-        if(records.length>1) {
-          if(records[0].appuAmount === records[1].appuAmount) {
+          appufirstIndexedTotals[customerId].push(record);
+        });
+        // console.log("....appufirstIndexedTotals",appufirstIndexedTotals);
+        // Sum up the first indexed totals for all customers
+        const apputotalFirstIndexed: any = Object.values(
+          appufirstIndexedTotals,
+        ).reduce((acc, records: any) => {
+          records.sort((a, b) => b.createdAt - a.createdAt);
+          // console.log("....appusortrecords",records);
+          acc += records[0].appuAmount || 0;
+          return acc;
+        }, 0);
+        appuTotal = apputotalFirstIndexed;
+        console.log('....appuTotal', appuTotal);
+
+        const appuinterestFirstIndexed: any = Object.values(
+          appufirstIndexedTotals,
+        ).reduce((acc: any, records: any) => {
+          // Sort records inversely based on some criteria, assuming 'date' field here
+          records.sort((a, b) => b.createdAt - a.createdAt);
+          // console.log("....records", records);
+          if (records.length > 1) {
+            if (records[0].appuAmount === records[1].appuAmount) {
+              acc += records[0].paidAmount;
+            }
+            if (records[0].appuAmount < records[1].appuAmount) {
+              acc += records[0].paidAmount;
+              acc -= records[1].appuAmount - records[0].appuAmount;
+            }
+          } else {
             acc += records[0].paidAmount;
           }
-          if(records[0].appuAmount < records[1].appuAmount) {
-            acc += records[0].paidAmount;
-            acc -= (records[1].appuAmount - records[0].appuAmount);
-          }
-        } else {
-          acc += records[0].paidAmount
-        }
-        return acc;
-      }, 0);
-      appuInterest = appuinterestFirstIndexed
-      console.log("...appuInterest", appuInterest);
+          return acc;
+        }, 0);
+        appuInterest = appuinterestFirstIndexed;
+        console.log('...appuInterest', appuInterest);
       }
       const sanghamdepositbalance = await this.sanghamDepositModel.find({
         sanghamId: req.sanghamId,
@@ -709,15 +717,19 @@ export class AgentService {
           return acc + podhupuAmount + fine;
         }, 0);
       }
-      console.log("....sanghamdeposit",totalSanghamAmount);
-      
+      console.log('....sanghamdeposit', totalSanghamAmount);
+
       if (findCustomerInterest) {
         return {
           statusCode: HttpStatus.OK,
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + withdrawtotalAmount + totalSanghamAmount + appuInterest - appuTotal,
+              totalpodupuAmount +
+              withdrawtotalAmount +
+              totalSanghamAmount +
+              appuInterest -
+              appuTotal,
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
@@ -731,11 +743,15 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount + withdrawtotalAmount + totalSanghamAmount + appuInterest - appuTotal,
+              totalpodupuAmount +
+              withdrawtotalAmount +
+              totalSanghamAmount +
+              appuInterest -
+              appuTotal,
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
-            appuInterest: appuInterest
+            appuInterest: appuInterest,
           },
         };
       }
@@ -824,6 +840,344 @@ export class AgentService {
           statusCode: HttpStatus.NOT_FOUND,
           message: 'Customers not found',
         };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async monthlyPodupu(req: sanghamDto) {
+    try {
+      const findPodupu = await this.podupuModel.find({
+        sanghamId: req.sanghamId,
+      });
+      if (findPodupu.length > 0) {
+        const recordsByDate = {};
+
+        findPodupu.forEach((podupu) => {
+          const dateString = podupu.date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const recordDate = new Date(dateString);
+          const date = recordDate.toDateString();
+          if (!recordsByDate[date]) {
+            recordsByDate[date] = [];
+          }
+
+          if (podupu.status === 'paid') {
+            recordsByDate[date].push(podupu);
+          }
+        });
+        const totalsByDate = {};
+        for (const date in recordsByDate) {
+          const records = recordsByDate[date];
+          const total = records.reduce(
+            (acc, record) => acc + record.podhupuAmount,
+            0,
+          );
+          totalsByDate[date] = total;
+        }
+        return totalsByDate;
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Podupu list not found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async monthlyDeposit(req: sanghamDto) {
+    try {
+      const findPodupu = await this.depositModel.find({
+        sanghamId: req.sanghamId,
+      });
+      if (findPodupu.length > 0) {
+        const recordsByDate = {};
+
+        findPodupu.forEach((podupu) => {
+          const dateString = podupu.date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const recordDate = new Date(dateString);
+          // console.log(recordDate);
+          const date = recordDate.toDateString();
+          // console.log(date);
+          if (!recordsByDate[date]) {
+            recordsByDate[date] = [];
+          }
+          // else {
+          recordsByDate[date].push(podupu);
+          // }
+          // console.log(recordsByDate);
+        });
+        const totalsByDate = {};
+        for (const date in recordsByDate) {
+          const records = recordsByDate[date];
+          const total = records.reduce(
+            (acc, record) => acc + record.depositAmount,
+            0,
+          );
+          totalsByDate[date] = total;
+        }
+        return totalsByDate;
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Podupu list not found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async monthlyWithdraw(req: sanghamDto) {
+    try {
+      const findPodupu = await this.depositModel.find({
+        sanghamId: req.sanghamId,
+      });
+      if (findPodupu.length > 0) {
+        const recordsByDate = {};
+
+        findPodupu.forEach((podupu) => {
+          const dateString = podupu.date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const recordDate = new Date(dateString);
+          // console.log(recordDate);
+          const date = recordDate.toDateString();
+          // console.log(date);
+          if (!recordsByDate[date]) {
+            recordsByDate[date] = [];
+          }
+          // else {
+          recordsByDate[date].push(podupu);
+          // }
+          // console.log(recordsByDate);
+        });
+        const totalsByDate = {};
+        for (const date in recordsByDate) {
+          const records = recordsByDate[date];
+          const total = records.reduce(
+            (acc, record) => acc + record.withdraw,
+            0,
+          );
+          totalsByDate[date] = total;
+        }
+        return totalsByDate;
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Podupu list not found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async monthlyAppuInterest(req: sanghamDto) {
+    try {
+      const findPodupu = await this.appuModel.find({
+        sanghamId: req.sanghamId,
+      });
+      if (findPodupu.length > 0) {
+        const recordsByDate = {};
+
+        findPodupu.forEach((podupu) => {
+          const dateString = podupu.date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const recordDate = new Date(dateString);
+          // console.log(recordDate);
+          const date = recordDate.toDateString();
+          // console.log(date);
+          if (!recordsByDate[date]) {
+            recordsByDate[date] = [];
+          }
+          // else {
+          recordsByDate[date].push(podupu);
+          // }
+          // console.log(recordsByDate);
+        });
+        const totalsByDate = {};
+        for (const date in recordsByDate) {
+          const records = recordsByDate[date];
+          const total = await records.reduce(async (accPromise, record) => {
+            const acc = await accPromise;
+            const findAppu = await this.appuModel.find({
+              customerId: record.customerId,
+            });
+            if (findAppu.length <= 1) {
+              return acc + parseFloat(record.paidAmount);
+            } else {
+              const differAmount =
+                findAppu[0].appuAmount - findAppu[1].appuAmount;
+              const value = acc + parseFloat(record.paidAmount) - differAmount;
+              if (value < 0) {
+                return value === 0;
+              } else {
+                return value;
+              }
+            }
+          }, Promise.resolve(0)); // Initialize accumulator as a resolved promise with value 0
+          // console.log('...acc', total);
+          totalsByDate[date] = total;
+        }
+        return totalsByDate;
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Podupu list not found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async monthlyAppuRecover(req: sanghamDto) {
+    try {
+      const findPodupu = await this.appuModel.find({
+        sanghamId: req.sanghamId,
+      });
+      if (findPodupu.length > 0) {
+        const recordsByDate = {};
+
+        findPodupu.forEach((podupu) => {
+          const dateString = podupu.date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const recordDate = new Date(dateString);
+          // console.log(recordDate);
+          const date = recordDate.toDateString();
+          // console.log(date);
+          if (!recordsByDate[date]) {
+            recordsByDate[date] = [];
+          }
+          // else {
+          recordsByDate[date].push(podupu);
+          // }
+          // console.log(recordsByDate);
+        });
+        const totalsByDate = {};
+        for (const date in recordsByDate) {
+          const records = recordsByDate[date];
+          const total = await records.reduce(async (accPromise, record) => {
+            const acc = await accPromise;
+            const findAppu = await this.appuModel
+              .find({
+                customerId: record.customerId,
+              })
+              .sort({ createdAt: -1 });
+            if (findAppu.length <= 1) {
+              return acc + parseFloat(record.paidAmount);
+            } else {
+              const dateString = findAppu[0].date.replace(
+                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                '',
+              );
+              const innerParseDate = new Date(dateString);
+              const recordParseString = record.date.replace(
+                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                '',
+              );
+              const recordParseDate = new Date(recordParseString);
+              if (
+                innerParseDate.getDate() === recordParseDate.getDate() &&
+                innerParseDate.getMonth() === recordParseDate.getMonth() &&
+                innerParseDate.getFullYear() === recordParseDate.getFullYear()
+              ) {
+                return acc + findAppu[1].appuAmount - findAppu[0].appuAmount;
+              } else {
+                return 0;
+              }
+            }
+          }, Promise.resolve(0)); // Initialize accumulator as a resolved promise with value 0
+          // console.log('...acc', total);
+          totalsByDate[date] = total;
+        }
+        return totalsByDate;
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'Podupu list not found',
+        };
+      }
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error,
+      };
+    }
+  }
+
+  async monthlyTotal(req: sanghamDto) {
+    try {
+      const getPodupu = await this.monthlyPodupu(req);
+      const getDeposit = await this.monthlyDeposit(req);
+      const getWithdraw = await this.monthlyWithdraw(req);
+      const getAppuInterest = await this.monthlyAppuInterest(req);
+      const getAppuRecover = await this.monthlyAppuRecover(req);
+      const responseData = {
+        getPodupu,
+        getDeposit,
+        getWithdraw,
+        getAppuInterest,
+        getAppuRecover,
+      };
+      const dates = Object.keys(responseData.getPodupu); // Assuming all objects have the same dates
+
+      const arrayOfObjects = dates.map((date) => {
+        return {
+          date: date,
+          podupu: responseData.getPodupu[date],
+          deposit: responseData.getDeposit[date],
+          withdraw: responseData.getWithdraw[date],
+          appuInterest: responseData.getAppuInterest[date],
+          appuRecover: responseData.getAppuRecover[date],
+          total:
+            responseData.getPodupu[date] +
+            responseData.getDeposit[date] -
+            responseData.getWithdraw[date] +
+            responseData.getAppuInterest[date] +
+            responseData.getAppuRecover[date],
+        };
+      });
+      if(arrayOfObjects.length > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: "List of monthly transactions",
+          data: arrayOfObjects,
+        }
+      } else {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "List of monthly transactions not found",
+        }
       }
     } catch (error) {
       return {

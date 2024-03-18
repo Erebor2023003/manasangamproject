@@ -18,6 +18,7 @@ import { withdrawDto } from './dto/withdraw.dto';
 import { Withdraw } from './schema/withdraw.schema';
 import { SanghamDeposit } from 'src/sanghamdeposits/schema/sanghamdeposit.schema';
 import { Sangham } from 'src/agent/schema/sangham.schema';
+import { sanghamDto } from 'src/agent/dto/sangham.dto';
 
 @Injectable()
 export class AdminService {
@@ -784,10 +785,10 @@ export class AdminService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
                   const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
@@ -884,10 +885,10 @@ export class AdminService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
                   const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
@@ -1509,10 +1510,10 @@ export class AdminService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
                   const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
@@ -1924,10 +1925,10 @@ export class AdminService {
           } else {
             const filteredpaidList = parsedDate
               ? paidList.filter((record) => {
-                const dateString = record.date.replace(
-                  /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                  '',
-                );
+                  const dateString = record.date.replace(
+                    /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+                    '',
+                  );
                   const recordDate = new Date(dateString);
                   return (
                     recordDate.getDate() === parsedDate.getDate() &&
