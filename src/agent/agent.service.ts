@@ -1137,47 +1137,57 @@ export class AgentService {
 
   async monthlyTotal(req: sanghamDto) {
     try {
-      const getPodupu = await this.monthlyPodupu(req);
-      const getDeposit = await this.monthlyDeposit(req);
-      const getWithdraw = await this.monthlyWithdraw(req);
-      const getAppuInterest = await this.monthlyAppuInterest(req);
-      const getAppuRecover = await this.monthlyAppuRecover(req);
-      const responseData = {
-        getPodupu,
-        getDeposit,
-        getWithdraw,
-        getAppuInterest,
-        getAppuRecover,
-      };
-      const dates = Object.keys(responseData.getPodupu); // Assuming all objects have the same dates
-
-      const arrayOfObjects = dates.map((date) => {
-        return {
-          date: date,
-          podupu: responseData.getPodupu[date],
-          deposit: responseData.getDeposit[date],
-          withdraw: responseData.getWithdraw[date],
-          appuInterest: responseData.getAppuInterest[date],
-          appuRecover: responseData.getAppuRecover[date],
-          total:
-            responseData.getPodupu[date] +
-            responseData.getDeposit[date] -
-            responseData.getWithdraw[date] +
-            responseData.getAppuInterest[date] +
-            responseData.getAppuRecover[date],
-        };
+      const findSangham = await this.sanghamModel.findOne({
+        sanghamId: req.sanghamId,
       });
-      if(arrayOfObjects.length > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: "List of monthly transactions",
-          data: arrayOfObjects,
+      if (findSangham) {
+        const getPodupu = await this.monthlyPodupu(req);
+        const getDeposit = await this.monthlyDeposit(req);
+        const getWithdraw = await this.monthlyWithdraw(req);
+        const getAppuInterest = await this.monthlyAppuInterest(req);
+        const getAppuRecover = await this.monthlyAppuRecover(req);
+        const responseData = {
+          getPodupu,
+          getDeposit,
+          getWithdraw,
+          getAppuInterest,
+          getAppuRecover,
+        };
+        const dates = Object.keys(responseData.getPodupu); // Assuming all objects have the same dates
+
+        const arrayOfObjects = dates.map((date) => {
+          return {
+            date: date,
+            podupu: responseData.getPodupu[date],
+            deposit: responseData.getDeposit[date],
+            withdraw: responseData.getWithdraw[date],
+            appuInterest: responseData.getAppuInterest[date],
+            appuRecover: responseData.getAppuRecover[date],
+            total:
+              responseData.getPodupu[date] +
+              responseData.getDeposit[date] -
+              responseData.getWithdraw[date] +
+              responseData.getAppuInterest[date] +
+              responseData.getAppuRecover[date],
+          };
+        });
+        if (arrayOfObjects.length > 0) {
+          return {
+            statusCode: HttpStatus.OK,
+            message: 'List of monthly transactions',
+            data: arrayOfObjects,
+          };
+        } else {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: 'List of monthly transactions not found',
+          };
         }
       } else {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "List of monthly transactions not found",
-        }
+          message: 'Sangham Not Found',
+        };
       }
     } catch (error) {
       return {
