@@ -383,7 +383,7 @@ export class SanghamdepositsService {
       if (balance.length > 0) {
         // Use reduce to sum up podhupuAmount and fine
         const totalAmount = balance.reduce((acc, current) => {
-          const podhupuAmount = current.depositAmount || 0;
+          const podhupuAmount = current.total || 0;
           return acc + podhupuAmount;
         }, 0);
         return {
