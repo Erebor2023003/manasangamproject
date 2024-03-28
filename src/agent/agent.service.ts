@@ -712,7 +712,7 @@ export class AgentService {
       let totalSanghamAmount = 0;
       if (sanghamdepositbalance.length > 0) {
         totalSanghamAmount = sanghamdepositbalance.reduce((acc, current) => {
-          const podhupuAmount = current.depositAmount || 0;
+          const podhupuAmount = current.total || 0;
           const fine = current.interest || 0;
           return acc + podhupuAmount + fine;
         }, 0);
