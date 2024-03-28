@@ -669,6 +669,12 @@ export class SanghamdepositsService {
     try{
       const findSangham = await this.sanghamModel.findOne({sanghamId: req.sanghamId});
       if(findSangham) {
+        if(!req.amount || req.amount === 0) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: "Please provide valid amount",
+          }
+        }
         const currentDate = new Date();
         const createPay = await this.paidModel.create({
           sanghamId: req.sanghamId,
