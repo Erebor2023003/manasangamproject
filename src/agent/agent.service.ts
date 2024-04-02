@@ -608,7 +608,15 @@ export class AgentService {
         const totalFirstIndexed: any = Object.values(firstIndexedTotals).reduce(
           (acc: any, records: any) => {
             records.sort((a, b) => b.createdAt - a.createdAt);
-            acc += records[0].total;
+            if (records.length > 0) {
+              // Accumulate depositAmount from each record
+              acc += records.reduce(
+                (sum, record) => sum + record.depositAmount,
+                0,
+              );
+            } else {
+              acc += 0;
+            }
             return acc;
           },
           0,
@@ -638,9 +646,12 @@ export class AgentService {
         const totalFirstIndexed: any = Object.values(firstIndexedTotals).reduce(
           (acc: any, records: any) => {
             records.sort((a, b) => b.createdAt - a.createdAt);
-            // console.log("records", records);
-            acc = records[0].withdraw
-            // acc += records[0].total;
+            if (records.length > 0) {
+              // Accumulate depositAmount from each record
+              acc += records.reduce((sum, record) => sum + record.withdraw, 0);
+            } else {
+              acc += 0;
+            }
             return acc;
           },
           0,
@@ -671,7 +682,7 @@ export class AgentService {
         const totalFirstIndexed: any = Object.values(firstIndexedTotals).reduce(
           (acc: any, records: any) => {
             records.sort((a, b) => b.createdAt - a.createdAt);
-            acc = records[0].interest
+            acc = records[0].interest;
             return acc;
           },
           0,
@@ -686,6 +697,7 @@ export class AgentService {
       });
       let appuTotal = 0;
       let appuInterest = 0;
+      let appuRecover = 0;
       if (appubalance.length > 0) {
         const appufirstIndexedTotals = {};
 
@@ -718,20 +730,48 @@ export class AgentService {
           records.sort((a, b) => b.createdAt - a.createdAt);
           // console.log("....records", records);
           if (records.length > 1) {
-            if (records[0].appuAmount === records[1].appuAmount) {
-              acc += records[0].paidAmount;
+            // if (records[0].appuAmount === records[1].appuAmount) {
+            //   acc += records[0].paidAmount;
+            // }
+            // if (records[0].appuAmount < records[1].appuAmount) {
+            //   acc += records[0].paidAmount;
+            //   acc -= records[1].appuAmount - records[0].appuAmount;
+            // }
+
+            for (let i = 0; i < records.length - 1; i++) {
+              const currentRecord = records[i];
+              const nextRecord = records[i + 1];
+
+              if (currentRecord.appuAmount === nextRecord.appuAmount) {
+                acc += currentRecord.paidAmount;
+              }
+
+              if (currentRecord.appuAmount < nextRecord.appuAmount) {
+                acc += currentRecord.paidAmount;
+                acc -= nextRecord.appuAmount - currentRecord.appuAmount;
+              }
+
+              // Calculate difference between current record and next record's appuAmount
+              let difference = nextRecord.appuAmount - currentRecord.appuAmount;
+              if (difference < 0) {
+                difference = 0;
+              }
+              appuRecover += Math.abs(difference);
+              // console.log(
+              //   `Difference between record ${i + 1} and record ${
+              //     i + 2
+              //   }: ${difference}`,
+              // );
             }
-            if (records[0].appuAmount < records[1].appuAmount) {
-              acc += records[0].paidAmount;
-              acc -= records[1].appuAmount - records[0].appuAmount;
-            }
+            // console.log("appu...acc", acc);
           } else {
-            acc += records[0].paidAmount;
+            acc += records[0].appuAmount;
           }
           return acc;
         }, 0);
         appuInterest = appuinterestFirstIndexed;
         console.log('...appuInterest', appuInterest);
+        console.log('...appuRecover', appuRecover);
       }
       const sanghamdepositbalance = await this.sanghamDepositModel.find({
         sanghamId: req.sanghamId,
@@ -752,14 +792,14 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount +
-              totalAmount -
-              // depositInterestAmount -
-              withdrawtotalAmount +
-              totalSanghamAmount +
-              appuInterest -
-              appuTotal,
-            appuAmount: appuTotal,
+              totalpodupuAmount + //podupu
+              totalAmount - //deposit
+              withdrawtotalAmount + // withdraw
+              totalSanghamAmount + // sangham deposit
+              appuInterest + // appuInterest
+              appuRecover - // appuRecover
+              appuTotal, // apuTotal
+            appuAmount: appuTotal - appuRecover,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
             interestRate: findCustomerInterest.interest,
@@ -772,13 +812,13 @@ export class AgentService {
           message: 'Available Balance of Sangham',
           data: {
             availableBalance:
-              totalpodupuAmount +
-              totalAmount -
-              // depositInterestAmount -
-              withdrawtotalAmount +
-              totalSanghamAmount +
-              appuInterest -
-              appuTotal,
+              totalpodupuAmount + //podupu
+              totalAmount - //deposit
+              withdrawtotalAmount + // withdraw
+              totalSanghamAmount + // sangham deposit
+              appuInterest + // appuInterest
+              appuRecover - // appuRecover
+              appuTotal, // apuTotal
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
             depositAmount: totalAmount + totalSanghamAmount,
