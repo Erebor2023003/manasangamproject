@@ -1349,12 +1349,13 @@ export class AdminService {
             })
             .sort({ createdAt: -1 });
           if (findDeposit[0].total === 0) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Deposit Amount has been Withdrawed Completely',
-            };
+            continue;
           }
-          const findDepositDate = new Date(findDeposit[0].date);
+          const dateString = findDeposit[0].date.replace(
+            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+            '',
+          );
+          const findDepositDate = new Date(dateString);
           console.log('findDepositDate', findDepositDate);
           const formattedDate = currentDate.toISOString().split('T')[0];
           console.log('formattedDate', formattedDate);
@@ -1365,23 +1366,15 @@ export class AdminService {
             findDepositDate.getMonth() === saveFormattedDate.getMonth() &&
             findDepositDate.getFullYear() === saveFormattedDate.getFullYear()
           ) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: 'Deposit has been paid on this day',
-            };
+            continue;
           }
 
           const lastMonthRecord = await this.depositModel.find({
             sanghamId: depositRecord.sanghamId,
             customerId: depositRecord.customerId,
             // date: {$lt: currentDate}
-          });
-          lastMonthRecord.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-
-            return dateB.getMonth() - dateA.getMonth();
-          });
+          }).sort({createdAt: -1});
+          console.log("////lastmonthrecord", lastMonthRecord);
           if (lastMonthRecord[0].total === 0) {
             continue;
             // return 'Record will be create when the deposit is added';
@@ -1397,10 +1390,18 @@ export class AdminService {
             lastMonthRecord.forEach((record) => {
               runningTotal += record.depositAmount;
             });
+            let runningWithdraw = 0;
+            lastMonthRecord.forEach((record) => {
+              runningWithdraw += record.withdraw;
+            });
+            let runningInterest = 0;
+            lastMonthRecord.forEach((record) => {
+              runningInterest += record.interest;
+            });
+            console.log("interest", lastMonthRecord[0].total * (findSangham.interest / 100));
             interest =
-              lastMonthRecord[0].interest +
               lastMonthRecord[0].total * (findSangham.interest / 100);
-            total = runningTotal + interest - withdraw;
+            total = runningTotal + interest + runningInterest - runningWithdraw;
           } else {
             interest = 0;
             total = lastMonthRecord[0].total;
