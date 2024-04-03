@@ -586,10 +586,13 @@ export class AgentService {
         }, 0);
       }
       console.log('......podupu', totalpodupuAmount);
+
+      // deposit amount
       const balance = await this.depositModel.find({
         sanghamId: req.sanghamId,
       });
       let totalAmount = 0;
+      let depositRecover = 0;
       if (balance.length > 0) {
         const firstIndexedTotals = {};
 
@@ -622,8 +625,32 @@ export class AgentService {
           0,
         );
         totalAmount = totalFirstIndexed;
+        const totaldepositInterest: any = Object.values(
+          firstIndexedTotals,
+        ).reduce((acc: any, records: any) => {
+          records.sort((a, b) => b.createdAt - a.createdAt);
+          let sum; // Initialize sum here
+          if (records.length > 0) {
+            // Accumulate depositAmount from each record
+            sum = records.reduce((sum, record) => {
+              const deposit = record.withdraw - record.interest;
+              sum += deposit;
+              // Ensure sum is not negative
+              if (sum < 0) {
+                sum = 0;
+              }
+              return sum;
+            }, 0);
+          }
+          // Accumulate sum to acc
+          acc += sum;
+          return acc;
+        }, 0);
+        depositRecover = totaldepositInterest;
       }
       console.log('.....deposit', totalAmount);
+      console.log('.....depositRecover', depositRecover);
+
       const withdrawbalance = await this.depositModel.find({
         sanghamId: req.sanghamId,
       });
@@ -801,7 +828,7 @@ export class AgentService {
               appuTotal, // apuTotal
             appuAmount: appuTotal - appuRecover,
             podhupuAmount: totalpodupuAmount,
-            depositAmount: totalAmount + totalSanghamAmount,
+            depositAmount: totalAmount - depositRecover + totalSanghamAmount,
             interestRate: findCustomerInterest.interest,
             appuInterest: appuInterest,
           },
@@ -821,7 +848,7 @@ export class AgentService {
               appuTotal, // apuTotal
             appuAmount: appuTotal,
             podhupuAmount: totalpodupuAmount,
-            depositAmount: totalAmount + totalSanghamAmount,
+            depositAmount: totalAmount - depositRecover + totalSanghamAmount,
             appuInterest: appuInterest,
           },
         };
