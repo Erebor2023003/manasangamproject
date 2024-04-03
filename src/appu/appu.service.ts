@@ -898,11 +898,11 @@ export class AppuService {
         const addAppuRecord = await this.appuModel.create({
           sanghamId: depositRecord.sanghamId,
           customerId: depositRecord.customerId,
-          appuAmount: depositRecord.appuAmount,
+          appuAmount: lastMonthRecord[0].appuAmount,
           paidAmount: 0,
           interest: interest,
           fine: fine,
-          total: depositRecord.appuAmount + interest + fine,
+          total: lastMonthRecord[0].appuAmount + interest + fine,
           date: saveFormattedDate,
           dueDate: depositRecord.dueDate,
           timePeriod: depositRecord.timePeriod,

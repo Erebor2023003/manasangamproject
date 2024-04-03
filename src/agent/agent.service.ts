@@ -1156,68 +1156,48 @@ export class AgentService {
     }
   }
 
-  async monthlyAppuRecover(req: sanghamDto) {
+  async monthlyAppuRecover(req) {
     try {
-      const findPodupu = await this.appuModel.find({
-        sanghamId: req.sanghamId,
-      });
+      const findPodupu = await this.appuModel.find({ sanghamId: req.sanghamId });
       if (findPodupu.length > 0) {
-        const recordsByDate = {};
-
-        findPodupu.forEach((podupu) => {
-          const dateString = podupu.date.replace(
-            /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-            '',
-          );
-          const recordDate = new Date(dateString);
-          // console.log(recordDate);
-          const date = recordDate.toDateString();
-          // console.log(date);
-          if (!recordsByDate[date]) {
-            recordsByDate[date] = [];
-          }
-          // else {
-          recordsByDate[date].push(podupu);
-          // }
-          // console.log(recordsByDate);
-        });
         const totalsByDate = {};
-        for (const date in recordsByDate) {
-          const records = recordsByDate[date];
-          const total = await records.reduce(async (accPromise, record) => {
-            const acc = await accPromise;
-            const findAppu = await this.appuModel
-              .find({
-                customerId: record.customerId,
-              })
-              .sort({ createdAt: -1 });
-            if (findAppu.length <= 1) {
-              return acc + parseFloat(record.paidAmount);
-            } else {
-              const dateString = findAppu[0].date.replace(
-                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                '',
-              );
-              const innerParseDate = new Date(dateString);
-              const recordParseString = record.date.replace(
-                /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
-                '',
-              );
-              const recordParseDate = new Date(recordParseString);
-              if (
-                innerParseDate.getDate() === recordParseDate.getDate() &&
-                innerParseDate.getMonth() === recordParseDate.getMonth() &&
-                innerParseDate.getFullYear() === recordParseDate.getFullYear()
-              ) {
-                return acc + findAppu[1].appuAmount - findAppu[0].appuAmount;
+  
+        // Group records by customer
+        const recordsByCustomer = {};
+        findPodupu.forEach((record) => {
+          if (!recordsByCustomer[record.customerId]) {
+            recordsByCustomer[record.customerId] = [];
+          }
+          recordsByCustomer[record.customerId].push(record);
+        });
+  
+        for (const customerId in recordsByCustomer) {
+          const customerRecords = recordsByCustomer[customerId];
+          for (let i = 1; i < customerRecords.length; i++) {
+            const currentDateString = customerRecords[i].date.replace(
+              /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+              '',
+            );
+            const previousDateString = customerRecords[i - 1].date.replace(
+              /GMTZ \(GMT[+-]\d{2}:\d{2}\)/,
+              '',
+            );
+            const currentDate = new Date(currentDateString);
+            const previousDate = new Date(previousDateString);
+            if (currentDate.getMonth() !== previousDate.getMonth()) {
+              const difference = customerRecords[i - 1].appuAmount - customerRecords[i].appuAmount;
+              const previousMonthKey = previousDate.toDateString();
+              const currentMonthKey = currentDate.toDateString();
+              totalsByDate[previousMonthKey] = totalsByDate[previousMonthKey] || 0;
+              if (difference > 0) {
+                totalsByDate[currentMonthKey] = (totalsByDate[currentMonthKey] || 0) + difference;
               } else {
-                return 0;
+                totalsByDate[currentMonthKey] = totalsByDate[currentMonthKey] || 0;
               }
             }
-          }, Promise.resolve(0)); // Initialize accumulator as a resolved promise with value 0
-          // console.log('...acc', total);
-          totalsByDate[date] = total;
+          }
         }
+  
         return totalsByDate;
       } else {
         return {
@@ -1228,10 +1208,10 @@ export class AgentService {
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: error,
+        message: error.message,
       };
     }
-  }
+  } 
 
   async monthlyTotal(req: sanghamDto) {
     try {
