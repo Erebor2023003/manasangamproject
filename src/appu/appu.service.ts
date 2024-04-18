@@ -855,7 +855,9 @@ export class AppuService {
         const formattedDate = currentDate.toISOString().split('T')[0];
         const saveFormattedDate = new Date(formattedDate);
         if (
-          findDepositDate.getDate() === saveFormattedDate.getDate() &&
+          (findDepositDate.getDate() === saveFormattedDate.getDate() &&
+          findDepositDate.getMonth() === saveFormattedDate.getMonth() &&
+          findDepositDate.getFullYear() === saveFormattedDate.getFullYear()) ||
           findDepositDate.getMonth() === saveFormattedDate.getMonth() &&
           findDepositDate.getFullYear() === saveFormattedDate.getFullYear()
         ) {
