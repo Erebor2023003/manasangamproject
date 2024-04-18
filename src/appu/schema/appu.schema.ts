@@ -2,6 +2,11 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
 import { AppuStatus, approveStatus } from "src/auth/guards/roles.enum";
 import { v4 as uuid } from 'uuid';
+
+const roundToTwoDecimalPlaces = (value: number) => {
+    return parseFloat(value.toFixed(2));
+};
+
 @Schema({ timestamps: true })
 
 export class Appu extends Document{
@@ -11,15 +16,15 @@ export class Appu extends Document{
     sanghamId: string
     @Prop()
     customerId: string
-    @Prop()
+    @Prop({ set: roundToTwoDecimalPlaces })
     appuAmount: number
-    @Prop()
+    @Prop({ set: roundToTwoDecimalPlaces })
     interest: number
-    @Prop()
+    @Prop({ set: roundToTwoDecimalPlaces })
     fine: number
-    @Prop()
+    @Prop({ set: roundToTwoDecimalPlaces })
     paidAmount: number
-    @Prop()
+    @Prop({ set: roundToTwoDecimalPlaces })
     total: number
     @Prop()
     date: string
